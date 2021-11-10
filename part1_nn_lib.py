@@ -329,7 +329,22 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self._layers = None
+        # Layer Instances of network containing alternating pattern of linear layers and activation function layers, type: list
+        f_plus_n = np.append(np.array(self.input_dim), self.neurons)
+
+        linear_layers = []
+
+        for i, _ in enumerate(neurons):
+            layer = LinearLayer(f_plus_n[i], f_plus_n[i + 1])
+            linear_layers.append(layer)
+            if activations[i] == "relu":
+                act_layer = ReluLayer()
+                linear_layers.append(act_layer)
+            elif activations[i] == "sigmoid":
+                act_layer = SigmoidLayer
+                linear_layers.append(act_layer)
+
+        self._layers = linear_layers
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -348,7 +363,14 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        return np.zeros((1, self.neurons[-1]))  # Replace with your own code
+
+        for layer in self._layers:
+            x = layer.forward(x)
+
+        # TODO: test this!
+        assert type(x) == np.ndarray
+
+        return x  # np.zeros((1, self.neurons[-1]))  # Replace with your own code
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -372,7 +394,9 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+
+        for layer in self._layers:
+            layer.update_params(learning_rate)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -389,7 +413,13 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        for layer in reversed(self._layers):
+            x = layer.backward(x)
+
+        # TODO: test this!
+        assert type(x) == np.ndarray
+
+        return x  # np.zeros((1, self.neurons[-1]))  # Replace with your own code
 
         #######################################################################
         #                       ** END OF YOUR CODE **
