@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.random import default_rng
 import pickle
 import math
 
@@ -471,16 +472,12 @@ class Trainer(object):
         self.loss_fun = loss_fun
         self.shuffle_flag = shuffle_flag
 
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-        self._loss_layer = None
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        self._loss_layer = (
+            MSELossLayer() if loss_fun == "mse" else CrossEntropyLossLayer()
+        )
 
     @staticmethod
-    def shuffle(input_dataset, target_dataset):
+    def shuffle(input_dataset, target_dataset, rg=default_rng()):
         """
         Returns shuffled versions of the inputs.
 
@@ -489,19 +486,22 @@ class Trainer(object):
                 (#_data_points, n_features) or (#_data_points,).
             - target_dataset {np.ndarray} -- Array of corresponding targets, of
                 shape (#_data_points, #output_neurons).
+            - rg (numpy.random.Generator) -- Random number generator.
 
         Returns:
             - {np.ndarray} -- shuffled inputs.
             - {np.ndarray} -- shuffled_targets.
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-        pass
 
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        assert len(input_dataset) == len(
+            target_dataset
+        ), "input and target data sets have different lengths"
+
+        # Shuffled indices for shuffling the instances
+        shuffled_indices = rg.permutation(len(input_dataset))
+
+        # Return the input data sets in shuffled order
+        return input_dataset[shuffled_indices], target_dataset[shuffled_indices]
 
     def train(self, input_dataset, target_dataset):
         """
@@ -523,14 +523,44 @@ class Trainer(object):
             - target_dataset {np.ndarray} -- Array of corresponding targets, of
                 shape (#_training_data_points, #output_neurons).
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-        pass
 
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        assert len(input_dataset) == len(
+            target_dataset
+        ), "input and target data sets have different lengths"
+
+        # Determine the number of batches
+        number_of_batches = len(input_dataset) // self.batch_size
+
+        # Loop for the number of epochs
+        for _ in self.nb_epoch:
+            if self.shuffle_flag:
+                # Shuffle the data sets
+                input_dataset, target_dataset = self.shuffle(
+                    input_dataset, target_dataset
+                )
+
+            # Split data sets into batches
+            input_batches = np.array_split(input_dataset, number_of_batches)
+            target_batches = np.array_split(target_dataset, number_of_batches)
+
+            # Loop over all batches
+            for input_batch, target_batch in zip(input_batches, target_batches):
+                # Forward pass
+                predicted_batch = self.network(input_batch)
+
+                # Compute loss (necessary for backward pass to work)
+                self._loss_layer.forward(
+                    predicted_batch, target_batch
+                )  # Return value 'loss' is ignored
+
+                # Backward pass
+                grad_loss_wrt_outputs = self._loss_layer.backward()
+                self.network.backward(
+                    grad_loss_wrt_outputs
+                )  # Return value 'grad_loss_wrt_inputs' is ignored
+
+                # Gradient descent on the network parameters
+                self.network.update_params(self.learning_rate)
 
     def eval_loss(self, input_dataset, target_dataset):
         """
@@ -543,14 +573,16 @@ class Trainer(object):
             - target_dataset {np.ndarray} -- Array of corresponding targets, of
                 shape (#_evaluation_data_points, #output_neurons).
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-        pass
 
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        assert len(input_dataset) == len(
+            target_dataset
+        ), "input and target data sets have different lengths"
+
+        # Get the predicted values
+        network_output = self.network(input_dataset)
+
+        # Evaluate and return the loss between the predicted and actual outputs
+        return self._loss_layer.forward(network_output, target_dataset)
 
 
 class Preprocessor(object):
