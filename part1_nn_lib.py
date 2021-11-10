@@ -65,7 +65,7 @@ class MSELossLayer(Layer):
 
 class CrossEntropyLossLayer(Layer):
     """
-    CrossEntropyLossLayer: Computes the softmax followed by the negative 
+    CrossEntropyLossLayer: Computes the softmax followed by the negative
     log-likelihood loss.
     """
 
@@ -99,13 +99,13 @@ class SigmoidLayer(Layer):
     """
 
     def __init__(self):
-        """ 
+        """
         Constructor of the Sigmoid layer.
         """
         self._cache_current = None
 
     def forward(self, x):
-        """ 
+        """
         Performs forward pass through the Sigmoid layer.
 
         Logs information needed to compute gradient at a later stage in
@@ -162,7 +162,7 @@ class ReluLayer(Layer):
         self._cache_current = None
 
     def forward(self, x):
-        """ 
+        """
         Performs forward pass through the Relu layer.
 
         Logs information needed to compute gradient at a later stage in
@@ -315,12 +315,12 @@ class MultiLayerNetwork(object):
         Constructor of the multi layer network.
 
         Arguments:
-            - input_dim {int} -- Number of features in the input (excluding 
+            - input_dim {int} -- Number of features in the input (excluding
                 the batch dimension).
-            - neurons {list} -- Number of neurons in each linear layer 
-                represented as a list. The length of the list determines the 
+            - neurons {list} -- Number of neurons in each linear layer
+                represented as a list. The length of the list determines the
                 number of linear layers.
-            - activations {list} -- List of the activation functions to apply 
+            - activations {list} -- List of the activation functions to apply
                 to the output of each linear layer.
         """
         self.input_dim = input_dim
@@ -330,7 +330,22 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self._layers = None
+        # Layer Instances of network containing alternating pattern of linear layers and activation function layers, type: list
+        f_plus_n = np.append(np.array(self.input_dim), self.neurons)
+
+        linear_layers = []
+
+        for i, _ in enumerate(neurons):
+            layer = LinearLayer(f_plus_n[i], f_plus_n[i + 1])
+            linear_layers.append(layer)
+            if activations[i] == "relu":
+                act_layer = ReluLayer()
+                linear_layers.append(act_layer)
+            elif activations[i] == "sigmoid":
+                act_layer = SigmoidLayer
+                linear_layers.append(act_layer)
+
+        self._layers = linear_layers
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -349,7 +364,14 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        return np.zeros((1, self.neurons[-1]))  # Replace with your own code
+
+        for layer in self._layers:
+            x = layer.forward(x)
+
+        # TODO: test this!
+        assert type(x) == np.ndarray
+
+        return x  # np.zeros((1, self.neurons[-1]))  # Replace with your own code
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -373,7 +395,13 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        for layer in reversed(self._layers):
+            x = layer.backward(x)
+
+        # TODO: test this!
+        assert type(x) == np.ndarray
+
+        return x  # np.zeros((1, self.neurons[-1]))  # Replace with your own code
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -390,7 +418,9 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+
+        for layer in self._layers:
+            layer.update_params(learning_rate)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -461,7 +491,7 @@ class Trainer(object):
             - target_dataset {np.ndarray} -- Array of corresponding targets, of
                 shape (#_data_points, #output_neurons).
 
-        Returns: 
+        Returns:
             - {np.ndarray} -- shuffled inputs.
             - {np.ndarray} -- shuffled_targets.
         """
