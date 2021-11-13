@@ -281,14 +281,8 @@ class LinearLayer(Layer):
         self._grad_W_current = np.matmul(self._cache_current.T, grad_z)
         self._grad_b_current = np.sum(grad_z, axis=0)
 
-        # Compute the gradient with respect to the layer inputs
-        grad_x = np.matmul(grad_z, self._W.T)
-
-        # Check if grad_x has shape (n,)
-        if grad_x.ndim == 1:
-            grad_x = grad_x[:, np.newaxis]
-
-        return grad_x
+        # Compute and return the gradient with respect to the layer inputs
+        return np.matmul(grad_z, self._W.T)
 
     def update_params(self, learning_rate):
         """
