@@ -151,10 +151,10 @@ class SigmoidLayer(Layer):
         sigmoid_derivative = lambda k: (1 / (1 + math.exp(-k))) * (
             1 - (1 / (1 + math.exp(-k)))
         )
-        v_sigmoid = np.vectorize(sigmoid_derivative)
+        v_sigmoid_derivative = np.vectorize(sigmoid_derivative)
 
         # Compute the gradient with respect to the layer inputs
-        return grad_z * v_sigmoid(self._cache_current)
+        return grad_z * v_sigmoid_derivative(self._cache_current)
 
 
 class ReluLayer(Layer):
@@ -181,14 +181,13 @@ class ReluLayer(Layer):
         Returns:
             {np.ndarray} -- Output array of shape (batch_size, n_out)
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-        pass
+        # log information needed to compute gradient at a later stage
+        self._cache_current = x
 
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        # perform forward pass through Relu layer. (apply Relu function elementwise to input)
+        relu = lambda k: 0 if k <= 0 else k
+        v_relu = np.vectorize(relu)
+        return v_relu(x)
 
     def backward(self, grad_z):
         """
@@ -204,14 +203,18 @@ class ReluLayer(Layer):
             {np.ndarray} -- Array containing gradient with repect to layer
                 input, of shape (batch_size, n_in).
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-        pass
 
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        # Check that grad_z has the correct shape
+        assert (
+            len(grad_z.shape) == 2 and grad_z.shape == self._cache_current.shape
+        ), "grad_z has incorrect shape"
+
+        # Compute derivative of relu function
+        relu_derivative = lambda k: 0 if k <= 0 else 1
+        v_relu_derivative = np.vectorize(relu_derivative)
+
+        # Compute the gradient with respect to the layer inputs
+        return grad_z * v_relu_derivative(self._cache_current)
 
 
 class LinearLayer(Layer):
