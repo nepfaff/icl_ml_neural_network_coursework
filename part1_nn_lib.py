@@ -532,7 +532,7 @@ class Trainer(object):
         number_of_batches = len(input_dataset) // self.batch_size
 
         # Loop for the number of epochs
-        for _ in self.nb_epoch:
+        for _ in range(self.nb_epoch):
             if self.shuffle_flag:
                 # Shuffle the data sets
                 input_dataset, target_dataset = self.shuffle(
