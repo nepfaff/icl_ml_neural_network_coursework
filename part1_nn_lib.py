@@ -220,22 +220,19 @@ class LinearLayer(Layer):
             - n_in {int} -- Number (or dimension) of inputs.
             - n_out {int} -- Number (or dimension) of outputs.
         """
+
+        # Store the layer dimensions
         self.n_in = n_in
         self.n_out = n_out
 
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-        self._W = None
-        self._b = None
+        # Initialise the learnable weights and bias
+        self._W = xavier_init((n_in, n_out))
+        self._b = np.zeros(n_out, dtype=float)
 
+        # Initialise the parameters required for backpropagation
         self._cache_current = None
         self._grad_W_current = None
         self._grad_b_current = None
-
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
 
     def forward(self, x):
         """
@@ -250,14 +247,14 @@ class LinearLayer(Layer):
         Returns:
             {np.ndarray} -- Output array of shape (batch_size, n_out)
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-        pass
 
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        # Check that x has the correct shape
+        assert len(x.shape) == 2 and x.shape[1] == self.n_in, "x has incorrect shape"
+
+        # Store the data necessary for computing the gradients
+        self._cache_current = x
+
+        return np.matmul(x, self._W) + self._b
 
     def backward(self, grad_z):
         """
@@ -273,14 +270,19 @@ class LinearLayer(Layer):
             {np.ndarray} -- Array containing gradient with repect to layer
                 input, of shape (batch_size, n_in).
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-        pass
 
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        # Check that grad_z has the correct shape
+        assert len(grad_z.shape) == 2 and grad_z.shape == (
+            len(self._cache_current),
+            self.n_out,
+        ), "grad_z has incorrect shape"
+
+        # Compute the gradients with respect to the layer's parameters
+        self._grad_W_current = np.matmul(self._cache_current.T, grad_z)
+        self._grad_b_current = np.sum(grad_z, axis=0)
+
+        # Compute and return the gradient with respect to the layer inputs
+        return np.matmul(grad_z, self._W.T)
 
     def update_params(self, learning_rate):
         """
@@ -290,14 +292,10 @@ class LinearLayer(Layer):
         Arguments:
             learning_rate {float} -- Learning rate of update step.
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-        pass
 
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        # Update weights and bias using the previously calculated gradients
+        self._W -= learning_rate * self._grad_W_current
+        self._b -= learning_rate * self._grad_b_current
 
 
 class MultiLayerNetwork(object):
