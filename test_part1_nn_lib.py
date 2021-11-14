@@ -91,4 +91,3 @@ def test_trainer_shuffle(trainer_data):
     assert np.all(
         np.sort(target_dataset, axis=0) == np.sort(shuffled_target_dataset, axis=0)
     ), "target dataset modified by shuffling"
-
