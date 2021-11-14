@@ -540,6 +540,10 @@ class Preprocessor(object):
         self.a = 0
         self.b = 1
 
+        # Check if data has shape (n,) and convert to (1, n)
+        if len(data.shape) == 1:
+            data = data[:, np.newaxis]
+
         # Determine X_Max and X_Min for each feature (column) in the input data.
         self.X_Max = np.max(data, axis=0)
         self.X_Min = np.min(data, axis=0)
@@ -554,6 +558,12 @@ class Preprocessor(object):
         Returns:
             normalized_data.T {np.ndarray} normalized dataset.
         """
+
+        # Check if data has shape (n,) and convert to (1, n)
+        converted_shape = False
+        if len(data.shape) == 1:
+            data = data[:, np.newaxis]
+            converted_shape = True
 
         # Store columns of normalized values as rows in list data_norm
         data_norm = []
@@ -570,6 +580,9 @@ class Preprocessor(object):
 
         # Convert data_norm to an array and return the transpose since it contains the normalised columns of data as rows
         normalized_data = np.array(data_norm)
+        if converted_shape:
+            # Convert back to (n,)
+            return normalized_data.flatten()
         return normalized_data.T
 
     def revert(self, data):
@@ -582,6 +595,12 @@ class Preprocessor(object):
         Returns:
             reverted_data.T {np.ndarray} reverted dataset.
         """
+
+        # Check if data has shape (n,) and convert to (1, n)
+        converted_shape = False
+        if len(data.shape) == 1:
+            data = data[:, np.newaxis]
+            converted_shape = True
 
         # Store columns of reverted values as rows in list data_rev
         data_rev = []
@@ -597,6 +616,9 @@ class Preprocessor(object):
 
         # Convert data_rev to an array and return the transpose since it contains the reverted columns of data as rows
         reverted_data = np.array(data_rev)
+        if converted_shape:
+            # Convert back to (n,)
+            return reverted_data.flatten()
         return reverted_data.T
 
 
