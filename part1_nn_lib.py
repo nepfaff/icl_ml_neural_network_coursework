@@ -535,9 +535,7 @@ class Preprocessor(object):
             data {np.ndarray} dataset used to determine the parameters for
             the normalization.
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
+
         # Scale the data to values between self.a = 0 and self.b = 1.
         self.a = 0
         self.b = 1
@@ -545,10 +543,6 @@ class Preprocessor(object):
         # Determine X_Max and X_Min for each feature (column) in the input data.
         self.X_Max = np.max(data, axis=0)
         self.X_Min = np.min(data, axis=0)
-
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
 
     def apply(self, data):
         """
@@ -560,9 +554,6 @@ class Preprocessor(object):
         Returns:
             normalized_data.T {np.ndarray} normalized dataset.
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
 
         # Store columns of normalized values as rows in list data_norm
         data_norm = []
@@ -581,10 +572,6 @@ class Preprocessor(object):
         normalized_data = np.array(data_norm)
         return normalized_data.T
 
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
-
     def revert(self, data):
         """
         Revert the pre-processing operations to retreive the original dataset.
@@ -595,9 +582,6 @@ class Preprocessor(object):
         Returns:
             reverted_data.T {np.ndarray} reverted dataset.
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
 
         # Store columns of reverted values as rows in list data_rev
         data_rev = []
@@ -614,10 +598,6 @@ class Preprocessor(object):
         # Convert data_rev to an array and return the transpose since it contains the reverted columns of data as rows
         reverted_data = np.array(data_rev)
         return reverted_data.T
-
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
 
 
 def example_main():
