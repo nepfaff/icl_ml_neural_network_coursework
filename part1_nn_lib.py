@@ -65,7 +65,7 @@ class MSELossLayer(Layer):
 
 class CrossEntropyLossLayer(Layer):
     """
-    CrossEntropyLossLayer: Computes the softmax followed by the negative 
+    CrossEntropyLossLayer: Computes the softmax followed by the negative
     log-likelihood loss.
     """
 
@@ -99,13 +99,13 @@ class SigmoidLayer(Layer):
     """
 
     def __init__(self):
-        """ 
+        """
         Constructor of the Sigmoid layer.
         """
         self._cache_current = None
 
     def forward(self, x):
-        """ 
+        """
         Performs forward pass through the Sigmoid layer.
 
         Logs information needed to compute gradient at a later stage in
@@ -162,7 +162,7 @@ class ReluLayer(Layer):
         self._cache_current = None
 
     def forward(self, x):
-        """ 
+        """
         Performs forward pass through the Relu layer.
 
         Logs information needed to compute gradient at a later stage in
@@ -309,12 +309,12 @@ class MultiLayerNetwork(object):
         Constructor of the multi layer network.
 
         Arguments:
-            - input_dim {int} -- Number of features in the input (excluding 
+            - input_dim {int} -- Number of features in the input (excluding
                 the batch dimension).
-            - neurons {list} -- Number of neurons in each linear layer 
-                represented as a list. The length of the list determines the 
+            - neurons {list} -- Number of neurons in each linear layer
+                represented as a list. The length of the list determines the
                 number of linear layers.
-            - activations {list} -- List of the activation functions to apply 
+            - activations {list} -- List of the activation functions to apply
                 to the output of each linear layer.
         """
         self.input_dim = input_dim
@@ -455,7 +455,7 @@ class Trainer(object):
             - target_dataset {np.ndarray} -- Array of corresponding targets, of
                 shape (#_data_points, #output_neurons).
 
-        Returns: 
+        Returns:
             - {np.ndarray} -- shuffled inputs.
             - {np.ndarray} -- shuffled_targets.
         """
@@ -533,14 +533,18 @@ class Preprocessor(object):
             data {np.ndarray} dataset used to determine the parameters for
             the normalization.
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-        pass
 
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        # Scale the data to values between self.a = 0 and self.b = 1.
+        self.a = 0
+        self.b = 1
+
+        # Check if data has shape (n,) and convert to (1, n)
+        if len(data.shape) == 1:
+            data = data[:, np.newaxis]
+
+        # Determine X_Max and X_Min for each feature (column) in the input data.
+        self.X_Max = np.max(data, axis=0)
+        self.X_Min = np.min(data, axis=0)
 
     def apply(self, data):
         """
@@ -550,16 +554,34 @@ class Preprocessor(object):
             data {np.ndarray} dataset to be normalized.
 
         Returns:
-            {np.ndarray} normalized dataset.
+            normalized_data.T {np.ndarray} normalized dataset.
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-        pass
 
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        # Check if data has shape (n,) and convert to (1, n)
+        converted_shape = False
+        if len(data.shape) == 1:
+            data = data[:, np.newaxis]
+            converted_shape = True
+
+        # Store columns of normalized values as rows in list data_norm
+        data_norm = []
+
+        for column in range(data.shape[1]):
+            # Calculate normalised values for each column (features), however, stored as rows
+            data_norm_column = self.a + (
+                (data[:, column] - self.X_Min[column])
+                / (self.X_Max[column] - self.X_Min[column])
+            ) * (self.b - self.a)
+
+            # Add new normalised row to data_norm
+            data_norm.append(data_norm_column)
+
+        # Convert data_norm to an array and return the transpose since it contains the normalised columns of data as rows
+        normalized_data = np.array(data_norm)
+        if converted_shape:
+            # Convert back to (n,)
+            return normalized_data.flatten()
+        return normalized_data.T
 
     def revert(self, data):
         """
@@ -569,16 +591,33 @@ class Preprocessor(object):
             data {np.ndarray} dataset for which to revert normalization.
 
         Returns:
-            {np.ndarray} reverted dataset.
+            reverted_data.T {np.ndarray} reverted dataset.
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-        pass
 
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        # Check if data has shape (n,) and convert to (1, n)
+        converted_shape = False
+        if len(data.shape) == 1:
+            data = data[:, np.newaxis]
+            converted_shape = True
+
+        # Store columns of reverted values as rows in list data_rev
+        data_rev = []
+
+        for column in range(data.shape[1]):
+            # Calculate reverted values for each column (features), however, stored as rows
+            data_rev_column = self.X_Min[column] + (
+                (data[:, column] - self.a) / (self.b - self.a)
+            ) * (self.X_Max[column] - self.X_Min[column])
+
+            # Add new reverted row to data_rev
+            data_rev.append(data_rev_column)
+
+        # Convert data_rev to an array and return the transpose since it contains the reverted columns of data as rows
+        reverted_data = np.array(data_rev)
+        if converted_shape:
+            # Convert back to (n,)
+            return reverted_data.flatten()
+        return reverted_data.T
 
 
 def example_main():
