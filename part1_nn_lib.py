@@ -368,9 +368,6 @@ class MultiLayerNetwork(object):
         for layer in self._layers:
             x = layer.forward(x)
 
-        # TODO: test this!
-        assert type(x) == np.ndarray
-
         return x  # np.zeros((1, self.neurons[-1]))  # Replace with your own code
 
         #######################################################################
@@ -416,9 +413,6 @@ class MultiLayerNetwork(object):
         #######################################################################
         for layer in reversed(self._layers):
             grad_z = layer.backward(grad_z)
-
-        # TODO: test this!
-        assert type(grad_z) == np.ndarray
 
         return grad_z  # np.zeros((1, self.neurons[-1]))  # Replace with your own code
 
