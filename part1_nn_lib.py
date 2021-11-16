@@ -327,9 +327,6 @@ class MultiLayerNetwork(object):
         self.neurons = neurons
         self.activations = activations
 
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
         # Layer Instances of network containing alternating pattern of linear layers and activation function layers, type: list
         f_plus_n = np.append(np.array(self.input_dim), self.neurons)
 
@@ -346,9 +343,6 @@ class MultiLayerNetwork(object):
                 linear_layers.append(act_layer)
 
         self._layers = linear_layers
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
 
     def forward(self, x):
         """
@@ -361,18 +355,11 @@ class MultiLayerNetwork(object):
             {np.ndarray} -- Output array of shape (batch_size,
                 #_neurons_in_final_layer)
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
 
         for layer in self._layers:
             x = layer.forward(x)
 
-        return x  # np.zeros((1, self.neurons[-1]))  # Replace with your own code
-
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        return x
 
     def __call__(self, x):
         return self.forward(x)
@@ -389,16 +376,11 @@ class MultiLayerNetwork(object):
             {np.ndarray} -- Array containing gradient with repect to layer
                 input, of shape (batch_size, input_dim).
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
 
-        for layer in self._layers:
-            layer.update_params(learning_rate)
+        for layer in reversed(self._layers):
+            grad_z = layer.backward(grad_z)
 
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        return grad_z
 
     def update_params(self, learning_rate):
         """
@@ -408,17 +390,9 @@ class MultiLayerNetwork(object):
         Arguments:
             learning_rate {float} -- Learning rate of update step.
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-        for layer in reversed(self._layers):
-            grad_z = layer.backward(grad_z)
 
-        return grad_z  # np.zeros((1, self.neurons[-1]))  # Replace with your own code
-
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        for layer in self._layers:
+            layer.update_params(learning_rate)
 
 
 def save_network(network, fpath):
