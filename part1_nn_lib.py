@@ -124,9 +124,7 @@ class SigmoidLayer(Layer):
         self._cache_current = x
 
         # perform forward pass through sigmoid layer. (apply sigmoid function elementwise to input)
-        sigmoid = lambda k: 1 / (1 + math.exp(-k))
-        v_sigmoid = np.vectorize(sigmoid)
-        return v_sigmoid(x)
+        return 1 / (1 + np.exp(-x))
 
     def backward(self, grad_z):
         """
@@ -148,13 +146,12 @@ class SigmoidLayer(Layer):
         ), "grad_z has incorrect shape"
 
         # Compute derivative of sigmoid function
-        sigmoid_derivative = lambda k: (1 / (1 + math.exp(-k))) * (
-            1 - (1 / (1 + math.exp(-k)))
+        sigmoid_derivative = lambda k: (1 / (1 + np.exp(-k))) * (
+            1 - (1 / (1 + np.exp(-k)))
         )
-        v_sigmoid_derivative = np.vectorize(sigmoid_derivative)
 
         # Compute the gradient with respect to the layer inputs
-        return grad_z * v_sigmoid_derivative(self._cache_current)
+        return grad_z * sigmoid_derivative(self._cache_current)
 
 
 class ReluLayer(Layer):
@@ -185,9 +182,8 @@ class ReluLayer(Layer):
         self._cache_current = x
 
         # perform forward pass through Relu layer. (apply Relu function elementwise to input)
-        relu = lambda k: 0 if k <= 0 else k
-        v_relu = np.vectorize(relu)
-        return v_relu(x)
+        x[x <= 0] = 0
+        return x
 
     def backward(self, grad_z):
         """
@@ -209,12 +205,11 @@ class ReluLayer(Layer):
             len(grad_z.shape) == 2 and grad_z.shape == self._cache_current.shape
         ), "grad_z has incorrect shape"
 
-        # Compute derivative of relu function
-        relu_derivative = lambda k: 0 if k <= 0 else 1
-        v_relu_derivative = np.vectorize(relu_derivative)
+        # Compute derivative of relu function with respect to inputs of layer and sore it in relu_derivative
+        relu_derivative = np.where(self._cache_current <= 0, 0, 1)
 
         # Compute the gradient with respect to the layer inputs
-        return grad_z * v_relu_derivative(self._cache_current)
+        return grad_z * relu_derivative
 
 
 class LinearLayer(Layer):
