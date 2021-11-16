@@ -1,5 +1,8 @@
 import numpy as np
 import pickle
+import math
+
+from numpy.lib.function_base import vectorize
 
 
 def xavier_init(size, gain=1.0):
@@ -117,14 +120,11 @@ class SigmoidLayer(Layer):
         Returns:
             {np.ndarray} -- Output array of shape (batch_size, n_out)
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-        pass
+        # log information needed to compute gradient at a later stage
+        self._cache_current = x
 
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        # perform forward pass through sigmoid layer. (apply sigmoid function elementwise to input)
+        return 1 / (1 + np.exp(-x))
 
     def backward(self, grad_z):
         """
@@ -140,14 +140,18 @@ class SigmoidLayer(Layer):
             {np.ndarray} -- Array containing gradient with repect to layer
                 input, of shape (batch_size, n_in).
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-        pass
+        # Check that grad_z has the correct shape
+        assert (
+            len(grad_z.shape) == 2 and grad_z.shape == self._cache_current.shape
+        ), "grad_z has incorrect shape"
 
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        # Compute derivative of sigmoid function
+        sigmoid_derivative = lambda k: (1 / (1 + np.exp(-k))) * (
+            1 - (1 / (1 + np.exp(-k)))
+        )
+
+        # Compute the gradient with respect to the layer inputs
+        return grad_z * sigmoid_derivative(self._cache_current)
 
 
 class ReluLayer(Layer):
@@ -174,14 +178,12 @@ class ReluLayer(Layer):
         Returns:
             {np.ndarray} -- Output array of shape (batch_size, n_out)
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-        pass
+        # log information needed to compute gradient at a later stage
+        self._cache_current = x
 
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        # perform forward pass through Relu layer. (apply Relu function elementwise to input)
+        x[x <= 0] = 0
+        return x
 
     def backward(self, grad_z):
         """
@@ -197,14 +199,17 @@ class ReluLayer(Layer):
             {np.ndarray} -- Array containing gradient with repect to layer
                 input, of shape (batch_size, n_in).
         """
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-        pass
 
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        # Check that grad_z has the correct shape
+        assert (
+            len(grad_z.shape) == 2 and grad_z.shape == self._cache_current.shape
+        ), "grad_z has incorrect shape"
+
+        # Compute derivative of relu function with respect to inputs of layer and sore it in relu_derivative
+        relu_derivative = np.where(self._cache_current <= 0, 0, 1)
+
+        # Compute the gradient with respect to the layer inputs
+        return grad_z * relu_derivative
 
 
 class LinearLayer(Layer):
