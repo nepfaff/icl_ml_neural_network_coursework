@@ -1,11 +1,23 @@
 import torch
+from torch import nn
+from torch.utils.data import DataLoader, TensorDataset
 import pickle
 import numpy as np
 import pandas as pd
 
 
-class Regressor:
-    def __init__(self, x, nb_epoch=1000):
+class Regressor(nn.Module):
+    def __init__(
+        self,
+        x,
+        nb_epoch=1000,
+        neurons=None,
+        activations=None,
+        batch_size=100,
+        shuffle=True,
+        learning_rate=1e-3,
+        optimizer_type="sgd",
+    ):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -16,23 +28,83 @@ class Regressor:
                 (batch_size, input_size), used to compute the size 
                 of the network.
             - nb_epoch {int} -- number of epoch to train the network.
-
+            - neurons {list} -- Number of neurons in each linear layer
+                represented as a list. The length of the list determines the
+                number of linear layers. This excludes the input and output layer.
+            - activations {list} -- List of the activation functions to apply
+                to the output of each linear layer. Must have the same length as 'neurons'
+                The first element is used as the activation for the input layer.
+                Allowed options are "relu", "sigmoid", "tanh". Anything else is ignored;
+                e.g. "identity" or "linear".
+            - batch_size {int} -- Batch size for mini batch gradient descent.
+            - shuffle {bool} -- Shuffle the input data before training.
+            - learning_rate {float} -- Learning rate for backward pass. Only used when
+                'optimizer_type' is "sgd".
+            - optimizer_type {str} -- The optimizer type to use. One of "sgd",
+                "adadelta", or "adam".
         """
 
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
+        assert (
+            neurons is None and activations is None or len(neurons) == len(activations)
+        ), "neurons and activations lists have different lengths"
 
-        # Replace this code with your own
+        super(Regressor, self).__init__()
+
+        self.nb_epoch = nb_epoch
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.learning_rate = learning_rate
+
+        # Default values
+        neurons = [10, 10] if neurons is None else neurons
+        activations = ["relu", "relu"] if activations is None else activations
+
+        # Determine input and output layer sizes
         X, _ = self._preprocessor(x, training=True)
         self.input_size = X.shape[1]
         self.output_size = 1
-        self.nb_epoch = nb_epoch
-        return
 
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        # Construct network structure
+        neurons = [self.input_size, *neurons, self.output_size]
+        activations.append("identity")  # output layer
+        layers = []
+        for i in range(len(neurons) - 1):
+            # Linear layer
+            layers.append(nn.Linear(neurons[i], neurons[i + 1]))
+            # Activation
+            if activations[i] == "relu":
+                layers.append(nn.ReLU())
+            elif activations[i] == "sigmoid":
+                layers.append(nn.Sigmoid())
+            elif activations[i] == "tanh":
+                layers.append(nn.Tanh())
+        self.layers = nn.Sequential(*layers)
+
+        # Loss function
+        self.loss_fn = nn.MSELoss()
+
+        # Optimizer
+        if optimizer_type == "sgd":
+            self.optimizer = torch.optim.SGD(self.parameters(), lr=learning_rate)
+        elif optimizer_type == "adadelta":
+            self.optimizer = torch.optim.Adadelta(self.parameters())
+        elif optimizer_type == "adam":
+            self.optimizer = torch.optim.Adam(self.parameters())
+        else:
+            raise AttributeError(f"Invalid optimizer type: {optimizer_type}")
+
+    def forward(self, X):
+        """
+        PyTorch forward method
+
+        Arguments:
+            - X {torch.Tensor} -- Input tensor of shape (batch_size, input_size).
+
+        Returns:
+            {torch.Tensor} -- Predicted value for the given input (batch_size, 1).
+        """
+
+        return self.layers(X)
 
     def _preprocessor(self, x, y=None, training=False):
         """ 
@@ -57,6 +129,12 @@ class Regressor:
         #                       ** START OF YOUR CODE **
         #######################################################################
 
+        # For testing other parts until this is implemented
+        return (
+            torch.tensor(x).float(),
+            (torch.tensor(y).float() if y is not None else None),
+        )
+
         # Replace this code with your own
         # Return preprocessed x and y, return None for y if it was None
         return x, (y if isinstance(y, pd.DataFrame) else None)
@@ -65,7 +143,7 @@ class Regressor:
         #                       ** END OF YOUR CODE **
         #######################################################################
 
-    def fit(self, x, y):
+    def fit(self, x, y, log=False, number_of_logs=5):
         """
         Regressor training function
 
@@ -73,22 +151,39 @@ class Regressor:
             - x {pd.DataFrame} -- Raw input array of shape 
                 (batch_size, input_size).
             - y {pd.DataFrame} -- Raw output array of shape (batch_size, 1).
+            - log {bool} -- Log gradient descent loss improvements.
+            - number_of_logs {int} -- Number of log messages to display.
 
         Returns:
             self {Regressor} -- Trained model.
 
         """
 
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
+        # Create data loader
+        X, Y = self._preprocessor(x, y=y, training=True)
+        training_data = TensorDataset(X, Y)
+        training_data_loader = DataLoader(
+            training_data, batch_size=self.batch_size, shuffle=self.shuffle
+        )
 
-        X, Y = self._preprocessor(x, y=y, training=True)  # Do not forget
+        # Training loop
+        for epoch in range(self.nb_epoch):
+            # Perform mini batch gradient descent
+            for X, y in training_data_loader:
+                # Forward pass
+                predictions = self(X)
+                loss = self.loss_fn(predictions, y)
+
+                # Backward pass
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
+
+            # Optional logging
+            if log and epoch % (self.nb_epoch // number_of_logs) == 0:
+                print(f"epoch: {epoch}, loss (based on last batch): {loss}")
+
         return self
-
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
 
     def predict(self, x):
         """
@@ -103,16 +198,10 @@ class Regressor:
 
         """
 
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-
-        X, _ = self._preprocessor(x, training=False)  # Do not forget
-        pass
-
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        X, _ = self._preprocessor(x, training=False)
+        with torch.no_grad():
+            predictions = self(X)
+        return predictions
 
     def score(self, x, y):
         """
