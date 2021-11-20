@@ -20,38 +20,6 @@ from sklearn.metrics import (
 )
 
 
-class Evaluation:
-    def __init__(self, y_true, y_pred):
-        self.explained_variance_score = explained_variance_score(y_true, y_pred)
-        self.max_error = max_error(y_true, y_pred)
-        self.neg_mean_absolute_error = neg_mean_absolute_error(y_true, y_pred)
-        self.neg_mean_squared_error = neg_mean_squared_error(y_true, y_pred)
-        self.neg_root_mean_squared_error = neg_root_mean_squared_error(y_true, y_pred)
-        self.mean_squared_error = mean_squared_error(y_true, y_pred)
-        self.mean_squared_log_error = mean_squared_log_error(y_true, y_pred)
-        self.median_absolute_error = median_absolute_error(y_true, y_pred)
-        self.r2_score = r2_score(y_true, y_pred)
-        self.mean_poisson_deviance = mean_poisson_deviance(y_true, y_pred)
-        self.mean_gamma_deviance = mean_gamma_deviance(y_true, y_pred)
-        self.mean_absolute_percentage_error = mean_absolute_percentage_error(
-            y_true, y_pred
-        )
-
-    def print_evaluation(self):
-        print("------------------ Evaluation Results ------------------ ")
-        print(f"explained_variance_score: {self.explained_variance_score}")
-        print(f"max_error: {self.max_error}")
-        print(f"neg_mean_absolute_error: {self.neg_mean_absolute_error}")
-        print(f"neg_mean_squared_error: {self.neg_mean_squared_error}")
-        print(f"neg_root_mean_squared_error: {neg_root_mean_squared_error}")
-        print(f"mean_squared_error: {mean_squared_error}")
-        print(f"mean_squared_log_error: {mean_squared_log_error}")
-        print(f"median_absolute_error: {median_absolute_error}")
-        print(f"r2_score: {r2_score}")
-        print(f"mean_poisson_deviance: {mean_poisson_deviance}")
-        print(f"mean_gamma_deviance: {mean_gamma_deviance}")
-
-
 class Regressor(nn.Module):
     def __init__(
         self,
@@ -273,11 +241,26 @@ class Regressor(nn.Module):
         Y_pred = self.predict(x)
 
         # Evaluating metrics
-        evaluated = Evaluation(Y_true, Y_pred)
+        evaluated = {
+            "explained_variance_score": explained_variance_score(Y_true, Y_pred),
+            "max_error": max_error(Y_true, Y_pred),
+            "neg_mean_absolute_error": neg_mean_absolute_error(Y_true, Y_pred),
+            "neg_mean_squared_error": neg_mean_squared_error(Y_true, Y_pred),
+            "neg_root_mean_squared_error": neg_root_mean_squared_error(Y_true, Y_pred),
+            "mean_squared_error": mean_squared_error(Y_true, Y_pred),
+            "mean_squared_log_error": mean_squared_log_error(Y_true, Y_pred),
+            "median_absolute_error": median_absolute_error(Y_true, Y_pred),
+            "r2_score": r2_score(Y_true, Y_pred),
+            "mean_poisson_deviance": mean_poisson_deviance(Y_true, Y_pred),
+            "mean_gamma_deviance": mean_gamma_deviance(Y_true, Y_pred),
+            "mean_absolute_percentage_error": mean_absolute_percentage_error(
+                Y_true, Y_pred
+            ),
+        }
 
-        # Currently unsure to print results or return:
+        # TODO: Either to print results or return:
         # Print
-        evaluated.print_evaluation()
+        print(evaluated)
 
         # Return
         return evaluated
