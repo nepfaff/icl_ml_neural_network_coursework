@@ -4,6 +4,52 @@ from torch.utils.data import DataLoader, TensorDataset
 import pickle
 import numpy as np
 import pandas as pd
+from sklearn.metrics import (
+    explained_variance_score,
+    max_error,
+    neg_mean_absolute_error,
+    neg_mean_squared_error,
+    neg_root_mean_squared_error,
+    mean_squared_error,
+    mean_squared_log_error,
+    median_absolute_error,
+    r2_score,
+    mean_poisson_deviance,
+    mean_gamma_deviance,
+    mean_absolute_percentage_error,
+)
+
+
+class Evaluation:
+    def __init__(self, y_true, y_pred):
+        self.explained_variance_score = explained_variance_score(y_true, y_pred)
+        self.max_error = max_error(y_true, y_pred)
+        self.neg_mean_absolute_error = neg_mean_absolute_error(y_true, y_pred)
+        self.neg_mean_squared_error = neg_mean_squared_error(y_true, y_pred)
+        self.neg_root_mean_squared_error = neg_root_mean_squared_error(y_true, y_pred)
+        self.mean_squared_error = mean_squared_error(y_true, y_pred)
+        self.mean_squared_log_error = mean_squared_log_error(y_true, y_pred)
+        self.median_absolute_error = median_absolute_error(y_true, y_pred)
+        self.r2_score = r2_score(y_true, y_pred)
+        self.mean_poisson_deviance = mean_poisson_deviance(y_true, y_pred)
+        self.mean_gamma_deviance = mean_gamma_deviance(y_true, y_pred)
+        self.mean_absolute_percentage_error = mean_absolute_percentage_error(
+            y_true, y_pred
+        )
+
+    def print_evaluation(self):
+        print("------------------ Evaluation Results ------------------ ")
+        print(f"explained_variance_score: {self.explained_variance_score}")
+        print(f"max_error: {self.max_error}")
+        print(f"neg_mean_absolute_error: {self.neg_mean_absolute_error}")
+        print(f"neg_mean_squared_error: {self.neg_mean_squared_error}")
+        print(f"neg_root_mean_squared_error: {neg_root_mean_squared_error}")
+        print(f"mean_squared_error: {mean_squared_error}")
+        print(f"mean_squared_log_error: {mean_squared_log_error}")
+        print(f"median_absolute_error: {median_absolute_error}")
+        print(f"r2_score: {r2_score}")
+        print(f"mean_poisson_deviance: {mean_poisson_deviance}")
+        print(f"mean_gamma_deviance: {mean_gamma_deviance}")
 
 
 class Regressor(nn.Module):
@@ -20,12 +66,12 @@ class Regressor(nn.Module):
     ):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
-        """ 
+        """
         Initialise the model.
-          
+
         Arguments:
-            - x {pd.DataFrame} -- Raw input data of shape 
-                (batch_size, input_size), used to compute the size 
+            - x {pd.DataFrame} -- Raw input data of shape
+                (batch_size, input_size), used to compute the size
                 of the network.
             - nb_epoch {int} -- number of epoch to train the network.
             - neurons {list} -- Number of neurons in each linear layer
@@ -107,14 +153,14 @@ class Regressor(nn.Module):
         return self.layers(X)
 
     def _preprocessor(self, x, y=None, training=False):
-        """ 
+        """
         Preprocess input of the network.
-          
+
         Arguments:
-            - x {pd.DataFrame} -- Raw input array of shape 
+            - x {pd.DataFrame} -- Raw input array of shape
                 (batch_size, input_size).
             - y {pd.DataFrame} -- Raw target array of shape (batch_size, 1).
-            - training {boolean} -- Boolean indicating if we are training or 
+            - training {boolean} -- Boolean indicating if we are training or
                 testing the model.
 
         Returns:
@@ -148,7 +194,7 @@ class Regressor(nn.Module):
         Regressor training function
 
         Arguments:
-            - x {pd.DataFrame} -- Raw input array of shape 
+            - x {pd.DataFrame} -- Raw input array of shape
                 (batch_size, input_size).
             - y {pd.DataFrame} -- Raw output array of shape (batch_size, 1).
             - log {bool} -- Log gradient descent loss improvements.
@@ -190,7 +236,7 @@ class Regressor(nn.Module):
         Ouput the value corresponding to an input x.
 
         Arguments:
-            x {pd.DataFrame} -- Raw input array of shape 
+            x {pd.DataFrame} -- Raw input array of shape
                 (batch_size, input_size).
 
         Returns:
@@ -208,7 +254,7 @@ class Regressor(nn.Module):
         Function to evaluate the model accuracy on a validation dataset.
 
         Arguments:
-            - x {pd.DataFrame} -- Raw input array of shape 
+            - x {pd.DataFrame} -- Raw input array of shape
                 (batch_size, input_size).
             - y {pd.DataFrame} -- Raw ouput array of shape (batch_size, 1).
 
@@ -221,8 +267,20 @@ class Regressor(nn.Module):
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        X, Y = self._preprocessor(x, y=y, training=False)  # Do not forget
-        return 0  # Replace this code with your own
+        _, Y_true = self._preprocessor(x, y=y, training=False)  # Do not forget
+
+        # Predict output, this function preprocess data itself so use raw data as argument
+        Y_pred = self.predict(x)
+
+        # Evaluating metrics
+        evaluated = Evaluation(Y_true, Y_pred)
+
+        # Currently unsure to print results or return:
+        # Print
+        evaluated.print_evaluation()
+
+        # Return
+        return evaluated
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -230,7 +288,7 @@ class Regressor(nn.Module):
 
 
 def save_regressor(trained_model):
-    """ 
+    """
     Utility function to save the trained regressor model in part2_model.pickle.
     """
     # If you alter this, make sure it works in tandem with load_regressor
@@ -240,7 +298,7 @@ def save_regressor(trained_model):
 
 
 def load_regressor():
-    """ 
+    """
     Utility function to load the trained regressor model in part2_model.pickle.
     """
     # If you alter this, make sure it works in tandem with save_regressor
@@ -253,14 +311,14 @@ def load_regressor():
 def RegressorHyperParameterSearch():
     # Ensure to add whatever inputs you deem necessary to this function
     """
-    Performs a hyper-parameter for fine-tuning the regressor implemented 
+    Performs a hyper-parameter for fine-tuning the regressor implemented
     in the Regressor class.
 
     Arguments:
         Add whatever inputs you need.
-        
+
     Returns:
-        The function should return your optimised hyper-parameters. 
+        The function should return your optimised hyper-parameters.
 
     """
 
@@ -303,4 +361,3 @@ def example_main():
 
 if __name__ == "__main__":
     example_main()
-
