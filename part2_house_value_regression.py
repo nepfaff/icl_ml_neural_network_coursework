@@ -240,6 +240,13 @@ class Regressor(nn.Module):
         # Predict output, this function preprocess data itself so use raw data as argument
         Y_pred = self.predict(x)
 
+        assert type(Y_true) == type(
+            Y_pred
+        ), "y_true and y_pred are different types, both should be nd.array"
+        assert len(Y_true) == len(Y_pred) and len(Y_true[0]) == len(
+            Y_pred[0]
+        ), "y_true and y_pred are different shapes, both should be (batch_size, 1)"
+
         # Evaluating metrics
         evaluated = {
             "explained_variance_score": explained_variance_score(Y_true, Y_pred),
