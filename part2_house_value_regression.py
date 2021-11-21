@@ -54,9 +54,9 @@ class Regressor:
 
         """
         # Handle missing values in the data (setting them naively to 0)
-        x.fillna(0)
+        x = x.fillna(0)
         if y is not None:
-            y.fillna(0)
+            y = y.fillna(0)
 
         # Convert inputs to np.ndarray
         x = x.values
