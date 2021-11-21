@@ -61,6 +61,10 @@ def test_regressor_preprocessor(housing_data):
             y_norm.shape == y.shape
         ), f"shapes {y_norm.shape} and {y.shape} are not equal"
 
+    # Test if arrays contain np.nan or np.inf
+    for array in chain(X, Y):
+        assert np.isfinite(array).all()
+
     # Test equivalence
     assert np.allclose(x_norm_train, x_norm) and np.allclose(x_norm, x_norm2)
     assert np.array_equal(y_norm_train, y_norm)
