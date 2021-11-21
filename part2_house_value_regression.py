@@ -70,8 +70,8 @@ class Regressor:
 
             # Perform Standardization
             ss = preprocessing.StandardScaler()
-            ss.fit_transform(x)
-            # ss.fit_transform(y)
+            x = ss.fit_transform(x)
+            # y = ss.fit_transform(y)
 
             # Store preprocessing parameters
             self.lb_training = lb
@@ -84,7 +84,7 @@ class Regressor:
             )
 
             # Perform Standardization
-            self.ss_training.transform(x)
+            x = self.ss_training.transform(x)
 
         # Return preprocessed x and y, return None for y if it was None
         return x.astype(float), (y.astype(float) if y is not None else None)
