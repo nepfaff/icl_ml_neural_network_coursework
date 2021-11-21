@@ -55,21 +55,23 @@ class Regressor:
         """
         # Handle missing values in the data (setting them naively to 0)
         x.fillna(0)
-        y.fillna(0)
+        if y is not None:
+            y.fillna(0)
 
         # Convert inputs to np.ndarray
         x = x.values
-        y = y.values
+        if y is not None:
+            y = y.values
 
         if training:
             # Handle textual values in the data, encoding them using one-hot encoding
             lb = preprocessing.LabelBinarizer()
-            x_ndarray = np.concatenate((x[:, :-1], lb.fit_transform(x[:, -1])), axis=1)
+            x = np.concatenate((x[:, :-1], lb.fit_transform(x[:, -1])), axis=1)
 
             # Perform Standardization
             ss = preprocessing.StandardScaler()
             ss.fit_transform(x)
-            ss.fit_transform(y)
+            # ss.fit_transform(y)
 
             # Store preprocessing parameters
             self.lb_training = lb
@@ -85,7 +87,7 @@ class Regressor:
             self.ss_training.transform(x)
 
         # Return preprocessed x and y, return None for y if it was None
-        return x, (y if isinstance(y, pd.DataFrame) else None)
+        return x.astype(float), (y.astype(float) if y is not None else None)
 
     def fit(self, x, y):
         """
