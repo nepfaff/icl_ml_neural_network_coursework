@@ -2,18 +2,19 @@ import torch
 import pickle
 import numpy as np
 import pandas as pd
+from sklearn import preprocessing
 
 
 class Regressor:
     def __init__(self, x, nb_epoch=1000):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
-        """ 
+        """
         Initialise the model.
-          
+
         Arguments:
-            - x {pd.DataFrame} -- Raw input data of shape 
-                (batch_size, input_size), used to compute the size 
+            - x {pd.DataFrame} -- Raw input data of shape
+                (batch_size, input_size), used to compute the size
                 of the network.
             - nb_epoch {int} -- number of epoch to train the network.
 
@@ -35,14 +36,14 @@ class Regressor:
         #######################################################################
 
     def _preprocessor(self, x, y=None, training=False):
-        """ 
+        """
         Preprocess input of the network.
-          
+
         Arguments:
-            - x {pd.DataFrame} -- Raw input array of shape 
+            - x {pd.DataFrame} -- Raw input array of shape
                 (batch_size, input_size).
             - y {pd.DataFrame} -- Raw target array of shape (batch_size, 1).
-            - training {boolean} -- Boolean indicating if we are training or 
+            - training {boolean} -- Boolean indicating if we are training or
                 testing the model.
 
         Returns:
@@ -52,25 +53,48 @@ class Regressor:
               size (batch_size, 1).
 
         """
+        # Handle missing values in the data (setting them naively to 0)
+        x = x.fillna(0)
+        if y is not None:
+            y = y.fillna(0)
 
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
+        # Convert inputs to np.ndarray
+        x = x.values
+        if y is not None:
+            y = y.values
 
-        # Replace this code with your own
+        if training:
+            # Handle textual values in the data, encoding them using one-hot encoding
+            lb = preprocessing.LabelBinarizer()
+            x = np.concatenate((x[:, :-1], lb.fit_transform(x[:, -1])), axis=1)
+
+            # Perform Standardization
+            ss = preprocessing.StandardScaler()
+            x = ss.fit_transform(x)
+            # y = ss.fit_transform(y)
+
+            # Store preprocessing parameters
+            self.lb_training = lb
+            self.ss_training = ss
+
+        else:
+            # Handle textual values in the data, encoding them using one-hot encoding
+            x = np.concatenate(
+                (x[:, :-1], self.lb_training.transform(x[:, -1])), axis=1
+            )
+
+            # Perform Standardization
+            x = self.ss_training.transform(x)
+
         # Return preprocessed x and y, return None for y if it was None
-        return x, (y if isinstance(y, pd.DataFrame) else None)
-
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        return x.astype(float), (y.astype(float) if y is not None else None)
 
     def fit(self, x, y):
         """
         Regressor training function
 
         Arguments:
-            - x {pd.DataFrame} -- Raw input array of shape 
+            - x {pd.DataFrame} -- Raw input array of shape
                 (batch_size, input_size).
             - y {pd.DataFrame} -- Raw output array of shape (batch_size, 1).
 
@@ -95,7 +119,7 @@ class Regressor:
         Ouput the value corresponding to an input x.
 
         Arguments:
-            x {pd.DataFrame} -- Raw input array of shape 
+            x {pd.DataFrame} -- Raw input array of shape
                 (batch_size, input_size).
 
         Returns:
@@ -119,7 +143,7 @@ class Regressor:
         Function to evaluate the model accuracy on a validation dataset.
 
         Arguments:
-            - x {pd.DataFrame} -- Raw input array of shape 
+            - x {pd.DataFrame} -- Raw input array of shape
                 (batch_size, input_size).
             - y {pd.DataFrame} -- Raw ouput array of shape (batch_size, 1).
 
@@ -141,7 +165,7 @@ class Regressor:
 
 
 def save_regressor(trained_model):
-    """ 
+    """
     Utility function to save the trained regressor model in part2_model.pickle.
     """
     # If you alter this, make sure it works in tandem with load_regressor
@@ -151,7 +175,7 @@ def save_regressor(trained_model):
 
 
 def load_regressor():
-    """ 
+    """
     Utility function to load the trained regressor model in part2_model.pickle.
     """
     # If you alter this, make sure it works in tandem with save_regressor
@@ -164,14 +188,14 @@ def load_regressor():
 def RegressorHyperParameterSearch():
     # Ensure to add whatever inputs you deem necessary to this function
     """
-    Performs a hyper-parameter for fine-tuning the regressor implemented 
+    Performs a hyper-parameter for fine-tuning the regressor implemented
     in the Regressor class.
 
     Arguments:
         Add whatever inputs you need.
-        
+
     Returns:
-        The function should return your optimised hyper-parameters. 
+        The function should return your optimised hyper-parameters.
 
     """
 
@@ -214,4 +238,3 @@ def example_main():
 
 if __name__ == "__main__":
     example_main()
-
