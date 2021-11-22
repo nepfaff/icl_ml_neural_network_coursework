@@ -123,8 +123,8 @@ class Regressor(nn.Module):
               size (batch_size, input_size).
             - {torch.tensor} or {numpy.ndarray} -- Preprocessed target array of
               size (batch_size, 1).
-
         """
+
         # Handle missing values in the data (setting them naively to 0)
         x = x.fillna(0)
         if y is not None:
@@ -158,17 +158,6 @@ class Regressor(nn.Module):
             # Perform Standardization
             x = self.ss_training.transform(x)
 
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-
-        # For testing other parts until this is implemented
-        return (
-            torch.tensor(x).float(),
-            (torch.tensor(y).float() if y is not None else None),
-        )
-
-        # Replace this code with your own
         # Return preprocessed x and y, return None for y if it was None
         return x.astype(float), (y.astype(float) if y is not None else None)
 
