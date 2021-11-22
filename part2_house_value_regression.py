@@ -179,7 +179,7 @@ class Regressor(nn.Module):
 
         # Create data loader
         X, Y = self._preprocessor(x, y=y, training=True)
-        training_data = TensorDataset(X, Y)
+        training_data = TensorDataset(torch.Tensor(X), torch.Tensor(Y))
         training_data_loader = DataLoader(
             training_data, batch_size=self.batch_size, shuffle=self.shuffle
         )
