@@ -218,8 +218,8 @@ class Regressor(nn.Module):
 
         X, _ = self._preprocessor(x, training=False)
         with torch.no_grad():
-            predictions = self(X)
-        return predictions
+            predictions = self(torch.Tensor(X))
+        return predictions.detach().numpy()
 
     def score(self, x, y):
         """
