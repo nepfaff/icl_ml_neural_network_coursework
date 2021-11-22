@@ -69,6 +69,12 @@ def test_regressor_preprocessor(housing_data):
     assert np.allclose(x_norm_train, x_norm) and np.allclose(x_norm, x_norm2)
     assert np.array_equal(y_norm_train, y_norm)
 
-    # Test normalisation (uncommented as using standardisation instead of max-min normalisation)
-    # for x_norm in X:
-    #     assert np.all(x_norm <= 1) and np.all(x_norm >= 0)
+    # Test normalisation
+    for x_norm in X:
+        # Uncommented this line and comment the other line when using min-max
+        # normalisation instead of z-normalisation (standardisation)
+        # assert np.all(x_norm <= 1) and np.all(x_norm >= 0)
+
+        assert np.all(np.mean(x_norm, axis=0) == pytest.approx(0)) and np.all(
+            np.var(x_norm, axis=0) == pytest.approx(1)
+        )
