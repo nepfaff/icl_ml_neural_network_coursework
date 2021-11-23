@@ -133,26 +133,43 @@ class Regressor(nn.Module):
               size (batch_size, input_size).
             - {torch.tensor} or {numpy.ndarray} -- Preprocessed target array of
               size (batch_size, 1).
-
         """
 
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
+        # Handle missing values in the data (setting them naively to 0)
+        x = x.fillna(0)
+        if y is not None:
+            y = y.fillna(0)
 
-        # For testing other parts until this is implemented
-        return (
-            torch.tensor(x).float(),
-            (torch.tensor(y).float() if y is not None else None),
-        )
+        # Convert inputs to np.ndarray
+        x = x.values
+        if y is not None:
+            y = y.values
 
-        # Replace this code with your own
+        if training:
+            # Handle textual values in the data, encoding them using one-hot encoding
+            lb = preprocessing.LabelBinarizer()
+            x = np.concatenate((x[:, :-1], lb.fit_transform(x[:, -1])), axis=1)
+
+            # Perform Standardization
+            ss = preprocessing.StandardScaler()
+            x = ss.fit_transform(x)
+            # y = ss.fit_transform(y)
+
+            # Store preprocessing parameters
+            self.lb_training = lb
+            self.ss_training = ss
+
+        else:
+            # Handle textual values in the data, encoding them using one-hot encoding
+            x = np.concatenate(
+                (x[:, :-1], self.lb_training.transform(x[:, -1])), axis=1
+            )
+
+            # Perform Standardization
+            x = self.ss_training.transform(x)
+
         # Return preprocessed x and y, return None for y if it was None
-        return x, (y if isinstance(y, pd.DataFrame) else None)
-
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        return x.astype(float), (y.astype(float) if y is not None else None)
 
     def fit(self, x, y, log=False, number_of_logs=5):
         """
@@ -172,7 +189,7 @@ class Regressor(nn.Module):
 
         # Create data loader
         X, Y = self._preprocessor(x, y=y, training=True)
-        training_data = TensorDataset(X, Y)
+        training_data = TensorDataset(torch.Tensor(X), torch.Tensor(Y))
         training_data_loader = DataLoader(
             training_data, batch_size=self.batch_size, shuffle=self.shuffle
         )
@@ -211,8 +228,8 @@ class Regressor(nn.Module):
 
         X, _ = self._preprocessor(x, training=False)
         with torch.no_grad():
-            predictions = self(X)
-        return predictions
+            predictions = self(torch.Tensor(X))
+        return predictions.detach().numpy()
 
     def score(self, x, y, print_result=False):
         """
