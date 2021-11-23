@@ -117,7 +117,7 @@ class Regressor(nn.Module):
 
         return self.layers(X)
 
-    def _preprocessor(self, x, y=None, training=False):
+    def _preprocessor(self, x, y=None, training=False, standardization=True):
         """
         Preprocess input of the network.
 
@@ -150,23 +150,36 @@ class Regressor(nn.Module):
             lb = preprocessing.LabelBinarizer()
             x = np.concatenate((x[:, :-1], lb.fit_transform(x[:, -1])), axis=1)
 
-            # Perform Standardization
-            ss = preprocessing.StandardScaler()
-            x = ss.fit_transform(x)
-            # y = ss.fit_transform(y)
-
-            # Store preprocessing parameters
+            # Store Binarizer preprocessing parameters
             self.lb_training = lb
-            self.ss_training = ss
 
+            if standardization:
+                # Perform Standardization
+                ss = preprocessing.StandardScaler()
+                x = ss.fit_transform(x)
+                # y = ss.fit_transform(y)
+
+                # Store Standardization preprocessing parameters
+                self.ss_training = ss
+            else:
+                # Perform MinMax Normalization
+                mms = preprocessing.MinMaxScaler()
+                x = mms.fit_transform(x)
+
+                # Store mms preprocessing parameters
+                self.mms_training = mms
         else:
             # Handle textual values in the data, encoding them using one-hot encoding
             x = np.concatenate(
                 (x[:, :-1], self.lb_training.transform(x[:, -1])), axis=1
             )
 
-            # Perform Standardization
-            x = self.ss_training.transform(x)
+            if standardization:
+                # Perform Standardization
+                x = self.ss_training.transform(x)
+            else:
+                # Perform MinMax Normalization
+                x = self.mms_training.transform(x)
 
         # Return preprocessed x and y, return None for y if it was None
         return x.astype(float), (y.astype(float) if y is not None else None)
