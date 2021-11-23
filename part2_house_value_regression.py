@@ -14,7 +14,6 @@ from sklearn.metrics import (
     r2_score,
     mean_poisson_deviance,
     mean_gamma_deviance,
-    mean_absolute_percentage_error,
 )
 
 
@@ -267,9 +266,6 @@ class Regressor(nn.Module):
             "r2_score": r2_score(Y_true, Y_pred),
             "mean_poisson_deviance": mean_poisson_deviance(Y_true, Y_pred),
             "mean_gamma_deviance": mean_gamma_deviance(Y_true, Y_pred),
-            "mean_absolute_percentage_error": mean_absolute_percentage_error(
-                Y_true, Y_pred
-            ),
         }
 
         if print_result:
