@@ -159,6 +159,7 @@ class Regressor(nn.Module):
         """
 
         return {
+            "x": self.x,
             "n_hidden_layers": self.n_hidden_layers,
             "n_neurons_first_hidden_layer": self.n_neurons_first_hidden_layer,
             "n_neurons_last_hidden_layer": self.n_neurons_last_hidden_layer,
@@ -464,6 +465,7 @@ def RegressorHyperParameterSearch(x, y):
         NaN_mean_of_columns=[False, True],
         NaN_fill_with_0=[False, True],
         standardization_or_MinMax=[False, True],
+        x=[x],
     )
     # grid = RandomizedSearchCV(
     #     estimator=Regressor(x), param_distributions=param_grid, n_jobs=-1, cv=3
