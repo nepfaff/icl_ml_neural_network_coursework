@@ -27,6 +27,10 @@ class Regressor(nn.Module):
         shuffle=True,
         learning_rate=1e-3,
         optimizer_type="sgd",
+        NaN_remove_rows=False,
+        NaN_mean_of_columns=False,
+        NaN_fill_with_0=True,
+        standardization_or_MinMax=True,
     ):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
@@ -52,6 +56,11 @@ class Regressor(nn.Module):
                 'optimizer_type' is "sgd".
             - optimizer_type {str} -- The optimizer type to use. One of "sgd",
                 "adadelta", or "adam".
+            - NaN_remove_rows {bool} -- Remove rows containing NaN in preprocessor method
+            - NaN_mean_of_columns {bool} -- Replace NaN with mean of coulmun in preprocessor method
+            - NaN_fill_with_0 {bool} -- Replace NaN with 0 in preprocessor method
+            - standardization_or_MinMax {bool} -- If true perfrom standardization when preprocessing data.
+                If false perform MinMax normalization when preprocessing data.
         """
 
         assert (
@@ -67,6 +76,13 @@ class Regressor(nn.Module):
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.learning_rate = learning_rate
+
+        # Preprocessor parameters
+        self.NaN_remove_rows = NaN_remove_rows
+        self.NaN_mean_of_columns = NaN_mean_of_columns
+        self.NaN_fill_with_0 = NaN_fill_with_0
+
+        self.standardization_or_MinMax = standardization_or_MinMax
 
         # Default values
         neurons = [10, 10] if neurons is None else neurons
@@ -119,7 +135,12 @@ class Regressor(nn.Module):
 
         return self.layers(X)
 
-    def _preprocessor(self, x, y=None, training=False, standardization=True):
+    def _preprocessor(
+        self,
+        x,
+        y=None,
+        training=False,
+    ):
         """
         Preprocess input of the network.
 
@@ -130,6 +151,7 @@ class Regressor(nn.Module):
             - training {boolean} -- Boolean indicating if we are training or
                 testing the model.
 
+
         Returns:
             - {torch.tensor} or {numpy.ndarray} -- Preprocessed input array of
               size (batch_size, input_size).
@@ -137,10 +159,22 @@ class Regressor(nn.Module):
               size (batch_size, 1).
         """
 
-        # Handle missing values in the data (setting them naively to 0)
-        x = x.fillna(0)
-        if y is not None:
-            y = y.fillna(0)
+        # Handle NaN values
+        if self.NaN_remove_rows:
+            # Remove rows with NAN
+            x = x.dropna()
+            if y is not None:
+                y = y.dropna()
+
+        if self.NaN_mean_of_columns:
+            x = x.fillna(x.mean())
+            if y is not None:
+                y = fillna(y.mean())
+
+        if self.NaN_fill_with_0:
+            x = x.fillna(0)
+            if y is not None:
+                y = y.fillna(0)
 
         # Convert inputs to np.ndarray
         x = x.values
@@ -158,7 +192,7 @@ class Regressor(nn.Module):
             # Store Binarizer preprocessing parameters
             self.lb_training = lb
 
-            if standardization:
+            if self.standardization_or_MinMax:
                 # Perform Standardization
                 ss = preprocessing.StandardScaler()
                 x = ss.fit_transform(x)
@@ -179,7 +213,7 @@ class Regressor(nn.Module):
                 (x[:, :-1], self.lb_training.transform(x[:, -1])), axis=1
             )
 
-            if standardization:
+            if self.standardization_or_MinMax:
                 # Perform Standardization
                 x = self.ss_training.transform(x)
             else:
