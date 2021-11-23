@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader, TensorDataset
 import pickle
 import numpy as np
 import pandas as pd
+from sklearn import preprocessing
 from sklearn.metrics import (
     explained_variance_score,
     max_error,
