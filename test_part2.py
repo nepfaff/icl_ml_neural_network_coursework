@@ -34,21 +34,17 @@ def test_regressor_preprocessor(housing_data):
     """
 
     # set to True to test standardization. set to False to test MinMax Normalization
-    standardization_or_MinMax = True
+    standardization_or_MinMax_ = False
 
     x, y = housing_data
-    regressor = Regressor(x)
+    regressor = Regressor(x, standardization_or_MinMax=standardization_or_MinMax_)
 
     # Training mode
-    x_norm_train, y_norm_train = regressor._preprocessor(
-        x, y, training=True, standardization=standardization_or_MinMax
-    )
+    x_norm_train, y_norm_train = regressor._preprocessor(x, y, training=True)
     # Default mode (using parameters from training mode)
-    x_norm, y_norm = regressor._preprocessor(
-        x, y, standardization=standardization_or_MinMax
-    )
+    x_norm, y_norm = regressor._preprocessor(x, y)
     # Default mode without y
-    x_norm2, _ = regressor._preprocessor(x, standardization=standardization_or_MinMax)
+    x_norm2, _ = regressor._preprocessor(x)
 
     # Group for cleaner testing
     X = [x_norm_train, x_norm, x_norm2]
@@ -80,7 +76,7 @@ def test_regressor_preprocessor(housing_data):
     for x_norm in X:
 
         # Uncommented this line and comment the other line when using min-max
-        if standardization_or_MinMax:
+        if standardization_or_MinMax_:
             # Test Standardization
             assert np.all(np.mean(x_norm, axis=0) == pytest.approx(0)) and np.all(
                 np.var(x_norm, axis=0) == pytest.approx(1)
