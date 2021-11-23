@@ -4,7 +4,17 @@ from torch.utils.data import DataLoader, TensorDataset
 import pickle
 import numpy as np
 import pandas as pd
-from sklearn import preprocessing
+from sklearn.metrics import (
+    explained_variance_score,
+    max_error,
+    mean_squared_error,
+    mean_squared_log_error,
+    median_absolute_error,
+    r2_score,
+    mean_poisson_deviance,
+    mean_gamma_deviance,
+    mean_absolute_percentage_error,
+)
 
 
 class Regressor(nn.Module):
@@ -221,7 +231,7 @@ class Regressor(nn.Module):
             predictions = self(torch.Tensor(X))
         return predictions.detach().numpy()
 
-    def score(self, x, y):
+    def score(self, x, y, print_result=False):
         """
         Function to evaluate the model accuracy on a validation dataset.
 
@@ -234,17 +244,37 @@ class Regressor(nn.Module):
             {float} -- Quantification of the efficiency of the model.
 
         """
+        _, Y_true = self._preprocessor(x, y=y, training=False)  # Do not forget
 
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
+        # Predict output, this function preprocess data itself so use raw data as argument
+        Y_pred = self.predict(x)
 
-        X, Y = self._preprocessor(x, y=y, training=False)  # Do not forget
-        return 0  # Replace this code with your own
+        assert type(Y_true) == type(
+            Y_pred
+        ), "y_true and y_pred are different types, both should be nd.array"
+        assert len(Y_true) == len(Y_pred) and len(Y_true[0]) == len(
+            Y_pred[0]
+        ), "y_true and y_pred are different shapes, both should be (batch_size, 1)"
 
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        # Evaluating metrics
+        evaluated = {
+            "explained_variance_score": explained_variance_score(Y_true, Y_pred),
+            "max_error": max_error(Y_true, Y_pred),
+            "mean_squared_error": mean_squared_error(Y_true, Y_pred),
+            "mean_squared_log_error": mean_squared_log_error(Y_true, Y_pred),
+            "median_absolute_error": median_absolute_error(Y_true, Y_pred),
+            "r2_score": r2_score(Y_true, Y_pred),
+            "mean_poisson_deviance": mean_poisson_deviance(Y_true, Y_pred),
+            "mean_gamma_deviance": mean_gamma_deviance(Y_true, Y_pred),
+            "mean_absolute_percentage_error": mean_absolute_percentage_error(
+                Y_true, Y_pred
+            ),
+        }
+
+        if print_result:
+            print(evaluated)
+
+        return evaluated["mean_squared_error"]
 
 
 def save_regressor(trained_model):
