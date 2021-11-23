@@ -32,18 +32,19 @@ def test_regressor_preprocessor(housing_data):
     """
     Tests '_preprocessor' method of 'Regressor' class.
     """
+    standardization_bool = True
 
     x, y = housing_data
     regressor = Regressor(x)
 
     # Training mode
     x_norm_train, y_norm_train = regressor._preprocessor(
-        x, y, training=True, standardization=False
+        x, y, training=True, standardization=standardization_bool
     )
     # Default mode (using parameters from training mode)
-    x_norm, y_norm = regressor._preprocessor(x, y, standardization=False)
+    x_norm, y_norm = regressor._preprocessor(x, y, standardization=standardization_bool)
     # Default mode without y
-    x_norm2, _ = regressor._preprocessor(x, standardization=False)
+    x_norm2, _ = regressor._preprocessor(x, standardization=standardization_bool)
 
     # Group for cleaner testing
     X = [x_norm_train, x_norm, x_norm2]
@@ -73,10 +74,13 @@ def test_regressor_preprocessor(housing_data):
 
     # Test normalisation
     for x_norm in X:
-        # Uncommented this line and comment the other line when using min-max
-        # normalisation instead of z-normalisation (standardisation)
-        # assert np.all(x_norm <= 1) and np.all(x_norm >= 0)
 
-        assert np.all(np.mean(x_norm, axis=0) == pytest.approx(0)) and np.all(
-            np.var(x_norm, axis=0) == pytest.approx(1)
-        )
+        # Uncommented this line and comment the other line when using min-max
+        if standardization_bool:
+            # Test Standardization
+            assert np.all(np.mean(x_norm, axis=0) == pytest.approx(0)) and np.all(
+                np.var(x_norm, axis=0) == pytest.approx(1)
+            )
+        else:
+            # Test MinMax normalization
+            assert np.all(x_norm <= 1) and np.all(x_norm >= 0)
