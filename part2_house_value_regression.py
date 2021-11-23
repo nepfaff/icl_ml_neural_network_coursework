@@ -8,9 +8,7 @@ from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     explained_variance_score,
-    max_error,
     mean_squared_error,
-    mean_squared_log_error,
     median_absolute_error,
     r2_score,
     mean_poisson_deviance,
@@ -270,9 +268,7 @@ class Regressor(nn.Module):
         # Evaluating metrics
         evaluated = {
             "explained_variance_score": explained_variance_score(Y_true, Y_pred),
-            "max_error": max_error(Y_true, Y_pred),
             "mean_squared_error": mean_squared_error(Y_true, Y_pred),
-            "mean_squared_log_error": mean_squared_log_error(Y_true, Y_pred),
             "median_absolute_error": median_absolute_error(Y_true, Y_pred),
             "r2_score": r2_score(Y_true, Y_pred),
             "mean_poisson_deviance": mean_poisson_deviance(Y_true, Y_pred),
@@ -348,7 +344,7 @@ def example_main():
     activations = ["relu", "relu"]
     regressor = Regressor(
         x_train,
-        nb_epoch=100,
+        nb_epoch=500,
         batch_size=2000,
         learning_rate=1e-2,
         neurons=neurons,
