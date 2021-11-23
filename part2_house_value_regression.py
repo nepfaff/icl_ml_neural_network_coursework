@@ -57,7 +57,7 @@ class Regressor(nn.Module):
             - optimizer_type {str} -- The optimizer type to use. One of "sgd",
                 "adadelta", or "adam".
             - NaN_remove_rows {bool} -- Remove rows containing NaN in preprocessor method
-            - NaN_mean_of_columns {bool} -- Replace NaN with mean of coulmun in preprocessor method
+            - NaN_mean_of_columns {bool} -- Replace NaN with mean of respective coulmun in preprocessor method
             - NaN_fill_with_0 {bool} -- Replace NaN with 0 in preprocessor method
             - standardization_or_MinMax {bool} -- If true perfrom standardization when preprocessing data.
                 If false perform MinMax normalization when preprocessing data.
@@ -167,11 +167,13 @@ class Regressor(nn.Module):
                 y = y.dropna()
 
         if self.NaN_mean_of_columns:
+            # Replace NaN with mean of  respective coulmun
             x = x.fillna(x.mean())
             if y is not None:
                 y = y.fillna(y.mean())
 
         if self.NaN_fill_with_0:
+            # Replace NaN with 0
             x = x.fillna(0)
             if y is not None:
                 y = y.fillna(0)
