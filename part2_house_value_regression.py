@@ -169,7 +169,7 @@ class Regressor(nn.Module):
         if self.NaN_mean_of_columns:
             x = x.fillna(x.mean())
             if y is not None:
-                y = fillna(y.mean())
+                y = y.fillna(y.mean())
 
         if self.NaN_fill_with_0:
             x = x.fillna(0)

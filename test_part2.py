@@ -37,7 +37,13 @@ def test_regressor_preprocessor(housing_data):
     standardization_or_MinMax_ = False
 
     x, y = housing_data
-    regressor = Regressor(x, standardization_or_MinMax=standardization_or_MinMax_)
+    regressor = Regressor(
+        x,
+        standardization_or_MinMax=standardization_or_MinMax_,
+        NaN_remove_rows=False,
+        NaN_fill_with_0=False,
+        NaN_mean_of_columns=True,
+    )
 
     # Training mode
     x_norm_train, y_norm_train = regressor._preprocessor(x, y, training=True)
@@ -57,7 +63,7 @@ def test_regressor_preprocessor(housing_data):
     # Test shape
     for x_norm in X:
         assert (
-            x_norm.shape[0] == x.shape[0] and x_norm.shape[1] >= x.shape[1]
+            x_norm.shape[0] <= x.shape[0] and x_norm.shape[1] >= x.shape[1]
         ), f"shapes {x_norm.shape} and {x.shape} don't match"
     for y_norm in Y:
         assert (
