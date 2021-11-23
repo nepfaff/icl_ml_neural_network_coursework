@@ -7,9 +7,6 @@ import pandas as pd
 from sklearn.metrics import (
     explained_variance_score,
     max_error,
-    neg_mean_absolute_error,
-    neg_mean_squared_error,
-    neg_root_mean_squared_error,
     mean_squared_error,
     mean_squared_log_error,
     median_absolute_error,
@@ -217,7 +214,7 @@ class Regressor(nn.Module):
             predictions = self(X)
         return predictions
 
-    def score(self, x, y):
+    def score(self, x, y, print_result=False):
         """
         Function to evaluate the model accuracy on a validation dataset.
 
@@ -230,11 +227,6 @@ class Regressor(nn.Module):
             {float} -- Quantification of the efficiency of the model.
 
         """
-
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-
         _, Y_true = self._preprocessor(x, y=y, training=False)  # Do not forget
 
         # Predict output, this function preprocess data itself so use raw data as argument
@@ -251,9 +243,6 @@ class Regressor(nn.Module):
         evaluated = {
             "explained_variance_score": explained_variance_score(Y_true, Y_pred),
             "max_error": max_error(Y_true, Y_pred),
-            "neg_mean_absolute_error": neg_mean_absolute_error(Y_true, Y_pred),
-            "neg_mean_squared_error": neg_mean_squared_error(Y_true, Y_pred),
-            "neg_root_mean_squared_error": neg_root_mean_squared_error(Y_true, Y_pred),
             "mean_squared_error": mean_squared_error(Y_true, Y_pred),
             "mean_squared_log_error": mean_squared_log_error(Y_true, Y_pred),
             "median_absolute_error": median_absolute_error(Y_true, Y_pred),
@@ -265,16 +254,10 @@ class Regressor(nn.Module):
             ),
         }
 
-        # TODO: Either to print results or return:
-        # Print
-        print(evaluated)
+        if print_result:
+            print(evaluated)
 
-        # Return
-        return evaluated
-
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
+        return evaluated["mean_squared_error"]
 
 
 def save_regressor(trained_model):
