@@ -1,11 +1,13 @@
 import torch
 from torch import nn
+from torch.nn.modules import activation
 from torch.utils.data import DataLoader, TensorDataset
 import pickle
+import math
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
 from sklearn.metrics import (
     explained_variance_score,
     mean_squared_error,
@@ -22,6 +24,10 @@ class Regressor(nn.Module):
         x,
         nb_epoch=1000,
         neurons=None,
+        generate_neurons=False,
+        n_hidden_layers=None,
+        n_neurons_first_hidden_layer=None,
+        n_neurons_last_hidden_layer=None,
         activations=None,
         batch_size=100,
         shuffle=True,
@@ -41,11 +47,15 @@ class Regressor(nn.Module):
             - neurons {list} -- Number of neurons in each linear layer
                 represented as a list. The length of the list determines the
                 number of linear layers. This excludes the input and output layer.
+            - generate_neurons {bool} -- If true, generate sequence of number of neurons per layer.
+                If this is true, the following must be set: n_hidden_layers, n_neurons_first_hidden_layer,
+                n_neurons_last_hidden_layer.
             - activations {list} -- List of the activation functions to apply
-                to the output of each linear layer. Must have the same length as 'neurons'
+                to the output of each linear layer. Must have the same length as 'neurons' or one.
                 The first element is used as the activation for the input layer.
                 Allowed options are "relu", "sigmoid", "tanh". Anything else is ignored;
-                e.g. "identity" or "linear".
+                e.g. "identity" or "linear". If the length is one, then this activatin function
+                will be used for all layers.
             - batch_size {int} -- Batch size for mini batch gradient descent.
             - shuffle {bool} -- Shuffle the input data before training.
             - learning_rate {float} -- Learning rate for backward pass. Only used when
@@ -54,42 +64,66 @@ class Regressor(nn.Module):
                 "adadelta", or "adam".
         """
 
-        assert (
-            neurons is None and activations is None or len(neurons) == len(activations)
-        ), "neurons and activations lists have different lengths"
-
         super(Regressor, self).__init__()
 
         # Divide and multiply y-values with this constant to improve learning
         self._y_scale = 100000
 
+        self.x = x
         self.nb_epoch = nb_epoch
+        self.neurons = neurons
+        self.generate_neurons = generate_neurons
+        self.n_hidden_layers = n_hidden_layers
+        self.n_neurons_first_hidden_layer = n_neurons_first_hidden_layer
+        self.n_neurons_last_hidden_layer = n_neurons_last_hidden_layer
+        self.activations = activations
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.learning_rate = learning_rate
+        self.optimizer_type = optimizer_type
+
+    def _create_network_from_params(self):
+        """
+        Heler method for creating the network from the parameters.
+        """
 
         # Default values
-        neurons = [10, 10] if neurons is None else neurons
-        activations = ["relu", "relu"] if activations is None else activations
+        self.neurons = [10, 10] if self.neurons is None else self.neurons
+        self.activations = (
+            ["relu", "relu"] if self.activations is None else self.activations
+        )
+
+        # Case when generate neurons is true
+        if self.generate_neurons:
+            self.neurons = generate_neurons_in_hidden_layers(
+                self.n_hidden_layers,
+                self.n_neurons_first_hidden_layer,
+                self.n_neurons_last_hidden_layer,
+            )
+
+        # Case when activatins contains a single entry
+        if not isinstance(self.activations, list):
+            act = self.activations
+            self.activations = [act for _ in range(len(self.neurons))]
 
         # Determine input and output layer sizes
-        X, _ = self._preprocessor(x, training=True)
+        X, _ = self._preprocessor(self.x, training=True)
         self.input_size = X.shape[1]
         self.output_size = 1
 
         # Construct network structure
-        neurons = [self.input_size, *neurons, self.output_size]
-        activations.append("identity")  # output layer
+        self.neurons = [self.input_size, *self.neurons, self.output_size]
+        self.activations.append("identity")  # output layer
         layers = []
-        for i in range(len(neurons) - 1):
+        for i in range(len(self.neurons) - 1):
             # Linear layer
-            layers.append(nn.Linear(neurons[i], neurons[i + 1]))
+            layers.append(nn.Linear(self.neurons[i], self.neurons[i + 1]))
             # Activation
-            if activations[i] == "relu":
+            if self.activations[i] == "relu":
                 layers.append(nn.ReLU())
-            elif activations[i] == "sigmoid":
+            elif self.activations[i] == "sigmoid":
                 layers.append(nn.Sigmoid())
-            elif activations[i] == "tanh":
+            elif self.activations[i] == "tanh":
                 layers.append(nn.Tanh())
         self.layers = nn.Sequential(*layers)
 
@@ -97,14 +131,39 @@ class Regressor(nn.Module):
         self.loss_fn = nn.MSELoss()
 
         # Optimizer
-        if optimizer_type == "sgd":
-            self.optimizer = torch.optim.SGD(self.parameters(), lr=learning_rate)
-        elif optimizer_type == "adadelta":
+        if self.optimizer_type == "sgd":
+            self.optimizer = torch.optim.SGD(self.parameters(), lr=self.learning_rate)
+        elif self.optimizer_type == "adadelta":
             self.optimizer = torch.optim.Adadelta(self.parameters())
-        elif optimizer_type == "adam":
+        elif self.optimizer_type == "adam":
             self.optimizer = torch.optim.Adam(self.parameters())
         else:
-            raise AttributeError(f"Invalid optimizer type: {optimizer_type}")
+            raise AttributeError(f"Invalid optimizer type: {self.optimizer_type}")
+
+    def get_params(self, deep=False):
+        """
+        Required for sklearn estimator.
+        """
+
+        return {
+            "n_hidden_layers": self.n_hidden_layers,
+            "n_neurons_first_hidden_layer": self.n_neurons_first_hidden_layer,
+            "n_neurons_last_hidden_layer": self.n_neurons_last_hidden_layer,
+            "activations": self.activations,
+            "optimizer_type": self.optimizer_type,
+            "batch_size": self.batch_size,
+            "nb_epoch": self.nb_epoch,
+            "learning_rate": self.learning_rate,
+        }
+
+    def set_params(self, **parameters):
+        """
+        Required for sklearn estimator.
+        """
+
+        for parameter, value in parameters.items():
+            setattr(self, parameter, value)
+        return self
 
     def forward(self, X):
         """
@@ -192,6 +251,10 @@ class Regressor(nn.Module):
 
         """
 
+        # Call this here instead of in the constructor for Regressor to
+        # work as an sklearn estimator
+        self._create_network_from_params()
+
         # Create data loader
         X, Y = self._preprocessor(x, y=y, training=True)
         training_data = TensorDataset(torch.Tensor(X), torch.Tensor(Y))
@@ -278,7 +341,8 @@ class Regressor(nn.Module):
         if print_result:
             print(evaluated)
 
-        return evaluated["mean_squared_error"]
+        # Return negative mean squared error
+        return -evaluated["mean_squared_error"]
 
 
 def save_regressor(trained_model):
@@ -302,29 +366,62 @@ def load_regressor():
     return trained_model
 
 
-def RegressorHyperParameterSearch():
+def generate_neurons_in_hidden_layers(
+    n_hidden_layers, n_neurons_first_hidden_layer, n_neurons_last_hidden_layer
+):
+    """
+    Generate number of neurons in hidden layers for hyperparameter tuning.
+
+    :param n_hidden_layers: Number of hidden layers.
+    :param n_neurons_first_hidden_layer: Number of neurons in the first hidden layer.
+    :param n_neurons_last_hidden_layer: Number of neurons in the last hidden layer.
+    """
+
+    n_neurons_in_hidden_layer = []
+    n_neurons_increment = (
+        n_neurons_last_hidden_layer - n_neurons_first_hidden_layer
+    ) / (n_hidden_layers - 1)
+    n_neurons = n_neurons_first_hidden_layer
+    for _ in range(n_hidden_layers):
+        n_neurons_in_hidden_layer.append(math.ceil(n_neurons))
+        n_neurons += n_neurons_increment
+
+    return n_neurons_in_hidden_layer
+
+
+def RegressorHyperParameterSearch(x, y):
     # Ensure to add whatever inputs you deem necessary to this function
     """
     Performs a hyper-parameter for fine-tuning the regressor implemented
     in the Regressor class.
 
     Arguments:
-        Add whatever inputs you need.
+        - x {pd.DataFrame} -- Raw input array of shape
+            (batch_size, input_size).
+        - y {pd.DataFrame} -- Raw output array of shape (batch_size, 1).
 
     Returns:
         The function should return your optimised hyper-parameters.
-
     """
 
-    #######################################################################
-    #                       ** START OF YOUR CODE **
-    #######################################################################
+    param_grid = dict(
+        n_hidden_layers=[1, 2, 3, 4, 5],
+        n_neurons_first_hidden_layer=[5, 10, 20, 40, 70, 100, 200],
+        n_neurons_last_hidden_layer=[5, 10, 20, 40, 70, 100, 200],
+        activations=["sigmoid", "tanh", "relu"],
+        optimizer_type=["sgd", "adadelta", "adam"],
+        batch_size=[100, 500, 2000, 5000, 20000],
+        nb_epoch=[1000],
+        learning_rate=[1e-1, 1e-2, 1e-3, 1e-6],
+    )
+    # grid = RandomizedSearchCV(
+    #     estimator=Regressor(x), param_distributions=param_grid, n_jobs=-1, cv=3
+    # )
+    grid = GridSearchCV(estimator=Regressor(x), param_grid=param_grid, n_jobs=-1, cv=3)
+    grid.fit(x, y)
 
-    return  # Return the chosen hyper parameters
-
-    #######################################################################
-    #                       ** END OF YOUR CODE **
-    #######################################################################
+    print("Best score", grid.best_score_)
+    print("Best params", grid.best_params_)
 
 
 def example_main():
@@ -335,6 +432,9 @@ def example_main():
     # Spliting input and output
     x = data.loc[:, data.columns != output_label]
     y = data.loc[:, [output_label]]
+
+    # Hyperparameter tuning test
+    RegressorHyperParameterSearch(x, y)
 
     # Splitting into training and test
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
