@@ -90,18 +90,15 @@ class Regressor(nn.Module):
         self.shuffle = shuffle
         self.learning_rate = learning_rate
         self.optimizer_type = optimizer_type
+        self.NaN_remove_rows = NaN_remove_rows
+        self.NaN_mean_of_columns = NaN_mean_of_columns
+        self.NaN_fill_with_0 = NaN_fill_with_0
+        self.standardization_or_MinMax = standardization_or_MinMax
 
     def _create_network_from_params(self):
         """
         Heler method for creating the network from the parameters.
         """
-
-        # Preprocessor parameters
-        self.NaN_remove_rows = NaN_remove_rows
-        self.NaN_mean_of_columns = NaN_mean_of_columns
-        self.NaN_fill_with_0 = NaN_fill_with_0
-
-        self.standardization_or_MinMax = standardization_or_MinMax
 
         # Default values
         self.neurons = [10, 10] if self.neurons is None else self.neurons
@@ -170,6 +167,12 @@ class Regressor(nn.Module):
             "batch_size": self.batch_size,
             "nb_epoch": self.nb_epoch,
             "learning_rate": self.learning_rate,
+            "learning_rate": self.learning_rate,
+            "optimizer_type": self.optimizer_type,
+            "NaN_remove_rows": self.NaN_remove_rows,
+            "NaN_mean_of_columns": self.NaN_mean_of_columns,
+            "NaN_fill_with_0": self.NaN_fill_with_0,
+            "standardization_or_MinMax": self.standardization_or_MinMax,
         }
 
     def set_params(self, **parameters):
@@ -194,12 +197,7 @@ class Regressor(nn.Module):
 
         return self.layers(X)
 
-    def _preprocessor(
-        self,
-        x,
-        y=None,
-        training=False,
-    ):
+    def _preprocessor(self, x, y=None, training=False):
         """
         Preprocess input of the network.
 
@@ -462,6 +460,10 @@ def RegressorHyperParameterSearch(x, y):
         batch_size=[100, 500, 2000, 5000, 20000],
         nb_epoch=[1000],
         learning_rate=[1e-1, 1e-2, 1e-3, 1e-6],
+        NaN_remove_rows=[False, True],
+        NaN_mean_of_columns=[False, True],
+        NaN_fill_with_0=[False, True],
+        standardization_or_MinMax=[False, True],
     )
     # grid = RandomizedSearchCV(
     #     estimator=Regressor(x), param_distributions=param_grid, n_jobs=-1, cv=3
@@ -483,7 +485,7 @@ def example_main():
     y = data.loc[:, [output_label]]
 
     # Hyperparameter tuning test
-    RegressorHyperParameterSearch(x, y)
+    # RegressorHyperParameterSearch(x, y)
 
     # Splitting into training and test
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
