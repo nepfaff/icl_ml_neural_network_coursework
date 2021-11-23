@@ -37,11 +37,13 @@ def test_regressor_preprocessor(housing_data):
     regressor = Regressor(x)
 
     # Training mode
-    x_norm_train, y_norm_train = regressor._preprocessor(x, y, training=True)
+    x_norm_train, y_norm_train = regressor._preprocessor(
+        x, y, training=True, standardization=False
+    )
     # Default mode (using parameters from training mode)
-    x_norm, y_norm = regressor._preprocessor(x, y)
+    x_norm, y_norm = regressor._preprocessor(x, y, standardization=False)
     # Default mode without y
-    x_norm2, _ = regressor._preprocessor(x)
+    x_norm2, _ = regressor._preprocessor(x, standardization=False)
 
     # Group for cleaner testing
     X = [x_norm_train, x_norm, x_norm2]
