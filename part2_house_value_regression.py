@@ -5,11 +5,10 @@ import pickle
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     explained_variance_score,
-    max_error,
     mean_squared_error,
-    mean_squared_log_error,
     median_absolute_error,
     r2_score,
     mean_poisson_deviance,
@@ -60,6 +59,9 @@ class Regressor(nn.Module):
         ), "neurons and activations lists have different lengths"
 
         super(Regressor, self).__init__()
+
+        # Divide and multiply y-values with this constant to improve learning
+        self._y_scale = 100000
 
         self.nb_epoch = nb_epoch
         self.batch_size = batch_size
@@ -144,6 +146,9 @@ class Regressor(nn.Module):
         x = x.values
         if y is not None:
             y = y.values
+
+            # Scale y-values
+            y /= self._y_scale
 
         if training:
             # Handle textual values in the data, encoding them using one-hot encoding
@@ -241,8 +246,12 @@ class Regressor(nn.Module):
 
         X, _ = self._preprocessor(x, training=False)
         with torch.no_grad():
-            predictions = self(torch.Tensor(X))
-        return predictions.detach().numpy()
+            scaled_predictions = self(torch.Tensor(X)).detach().numpy()
+
+        # Invert y-value scaling form preprocessor
+        predictions = scaled_predictions * self._y_scale
+
+        return predictions
 
     def score(self, x, y, print_result=False):
         """
@@ -272,9 +281,7 @@ class Regressor(nn.Module):
         # Evaluating metrics
         evaluated = {
             "explained_variance_score": explained_variance_score(Y_true, Y_pred),
-            "max_error": max_error(Y_true, Y_pred),
             "mean_squared_error": mean_squared_error(Y_true, Y_pred),
-            "mean_squared_log_error": mean_squared_log_error(Y_true, Y_pred),
             "median_absolute_error": median_absolute_error(Y_true, Y_pred),
             "r2_score": r2_score(Y_true, Y_pred),
             "mean_poisson_deviance": mean_poisson_deviance(Y_true, Y_pred),
@@ -334,28 +341,36 @@ def RegressorHyperParameterSearch():
 
 
 def example_main():
-
+    # Use pandas to read CSV data as it contains various object types
+    data = pd.read_csv("housing.csv")
     output_label = "median_house_value"
 
-    # Use pandas to read CSV data as it contains various object types
-    # Feel free to use another CSV reader tool
-    # But remember that LabTS tests take Pandas Dataframe as inputs
-    data = pd.read_csv("housing.csv")
-
     # Spliting input and output
-    x_train = data.loc[:, data.columns != output_label]
-    y_train = data.loc[:, [output_label]]
+    x = data.loc[:, data.columns != output_label]
+    y = data.loc[:, [output_label]]
+
+    # Splitting into training and test
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
 
     # Training
-    # This example trains on the whole available dataset.
-    # You probably want to separate some held-out data
-    # to make sure the model isn't overfitting
-    regressor = Regressor(x_train, nb_epoch=10)
-    regressor.fit(x_train, y_train)
-    save_regressor(regressor)
+    neurons = [30, 15]
+    activations = ["relu", "relu"]
+    regressor = Regressor(
+        x_train,
+        nb_epoch=500,
+        batch_size=2000,
+        learning_rate=1e-2,
+        neurons=neurons,
+        activations=activations,
+        optimizer_type="sgd",
+    )
+    regressor.fit(x_train, y_train, log=True, number_of_logs=10)
+
+    # Save model
+    # save_regressor(regressor)
 
     # Error
-    error = regressor.score(x_train, y_train)
+    error = regressor.score(x_test, y_test)
     print("\nRegressor error: {}\n".format(error))
 
 
