@@ -3,7 +3,9 @@ from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 import pickle
 import math
+from statistics import mean
 import numpy as np
+from numpy.random import default_rng
 import pandas as pd
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
@@ -312,12 +314,12 @@ class Regressor(nn.Module):
 
         # Evaluating metrics
         evaluated = {
-            "explained_variance_score": explained_variance_score(Y_true, Y_pred),
+            #"explained_variance_score": explained_variance_score(Y_true, Y_pred),
             "mean_squared_error": mean_squared_error(Y_true, Y_pred),
             "median_absolute_error": median_absolute_error(Y_true, Y_pred),
-            "r2_score": r2_score(Y_true, Y_pred),
-            "mean_poisson_deviance": mean_poisson_deviance(Y_true, Y_pred),
-            "mean_gamma_deviance": mean_gamma_deviance(Y_true, Y_pred),
+            #"r2_score": r2_score(Y_true, Y_pred),
+            #"mean_poisson_deviance": mean_poisson_deviance(Y_true, Y_pred),
+            #"mean_gamma_deviance": mean_gamma_deviance(Y_true, Y_pred),
         }
 
         if print_result:
@@ -358,6 +360,11 @@ def generate_neurons_in_hidden_layers(
     :param n_neurons_last_hidden_layer: Number of neurons in the last hidden layer.
     """
 
+    if n_hidden_layers == 0:
+        return []
+    elif n_hidden_layers == 1:
+        return [n_neurons_first_hidden_layer]
+
     n_neurons_in_hidden_layer = []
     n_neurons_increment = (
         n_neurons_last_hidden_layer - n_neurons_first_hidden_layer
@@ -368,6 +375,27 @@ def generate_neurons_in_hidden_layers(
         n_neurons += n_neurons_increment
 
     return n_neurons_in_hidden_layer
+
+def j_fold_split(
+    n_instances: int, j: int = 3, random_generator=default_rng()
+):
+    """
+    Randomises indices and splits them into j folds
+
+    :param n_instances: Number of instances of the dataset.
+    :param j: Number of folds for splitting.
+    :param random_generator: A random generator (np.random.Generator).
+    :return: A list of length j. Each element in the list is a numpy array of
+        shape (n,) and type int, giving the indices of the instances in that fold.
+    """
+
+    # generate a random permutation of indices from 0 to n_instances
+    shuffled_indices = random_generator.permutation(n_instances)
+
+    # split shuffled indices into almost equal sized splits
+    split_indices = np.array_split(shuffled_indices, j)
+
+    return split_indices
 
 
 def RegressorHyperParameterSearch():
@@ -384,15 +412,69 @@ def RegressorHyperParameterSearch():
 
     """
 
-    #######################################################################
-    #                       ** START OF YOUR CODE **
-    #######################################################################
+    # Use pandas to read CSV data as it contains various object types
+    data = pd.read_csv("housing.csv")
+    output_label = "median_house_value"
 
-    return  # Return the chosen hyper parameters
+    # Spliting input and output
+    x = data.loc[:, data.columns != output_label].values
+    y = data.loc[:, [output_label]].values
 
-    #######################################################################
-    #                       ** END OF YOUR CODE **
-    #######################################################################
+    # Training
+    best_error = float("inf")
+    best_layers = -1
+    best_n_neurons_first_hidden_layer = -1
+    n_neurons_last_hidden_layer = -1
+    for n_layers in range(11):
+        for n_neurons_first_hidden_layer in [10, 30, 60, 100]:
+            for n_neurons_last_hidden_layer in [10, 30, 60, 100]:
+                # Cross-validation
+                errors = []
+
+                # Randomise data & split code into j folds
+                split_indices = j_fold_split(len(x), 3)
+                for i, fold in enumerate(split_indices):
+                    # Assign test and train data
+                    test_indices = fold
+                    train_indices = np.hstack(split_indices[:i] + split_indices[i + 1 :])
+                    x_train = pd.DataFrame(x[train_indices])
+                    y_train = pd.DataFrame(y[train_indices])
+                    x_test = pd.DataFrame(x[test_indices])
+                    y_test = pd.DataFrame(y[test_indices])
+
+                    neurons = generate_neurons_in_hidden_layers(
+                        n_layers,
+                        n_neurons_first_hidden_layer,
+                        n_neurons_last_hidden_layer
+                    )
+                    activations = ["relu" for _ in range(len(neurons))]
+                    regressor = Regressor(
+                        x_train,
+                        nb_epoch=500,
+                        batch_size=2000,
+                        learning_rate=1e-2,
+                        neurons=neurons,
+                        activations=activations,
+                        optimizer_type="sgd",
+                    )
+                    regressor.fit(x_train, y_train)
+
+                    error = regressor.score(x_test, y_test)
+                    errors.append(error)
+
+                # Error
+                mean_error = mean(errors)
+                print(
+                    f"Regressor error: {mean_error}, layers: {n_layers}, n_neurons_first_hidden_layer: {n_neurons_first_hidden_layer}, n_neurons_last_hidden_layer: {n_neurons_last_hidden_layer}"
+                )
+
+                if mean_error < best_error:
+                    best_error = mean_error
+                    best_layers = n_layers
+                    best_n_neurons_first_hidden_layer = n_neurons_first_hidden_layer
+                    best_n_neurons_last_hidden_layer = n_neurons_last_hidden_layer
+
+    print(f"\nBest overall -> layers: {best_layers}, n_neurons_first_hidden_layer: {n_neurons_first_hidden_layer}, n_neurons_last_hidden_layer: {n_neurons_last_hidden_layer}")
 
 
 def example_main():
@@ -430,4 +512,5 @@ def example_main():
 
 
 if __name__ == "__main__":
-    example_main()
+    # example_main()
+    RegressorHyperParameterSearch()
