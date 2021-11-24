@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 import pickle
+import math
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
@@ -135,12 +136,7 @@ class Regressor(nn.Module):
 
         return self.layers(X)
 
-    def _preprocessor(
-        self,
-        x,
-        y=None,
-        training=False,
-    ):
+    def _preprocessor(self, x, y=None, training=False):
         """
         Preprocess input of the network.
 
@@ -349,6 +345,29 @@ def load_regressor():
         trained_model = pickle.load(target)
     print("\nLoaded model in part2_model.pickle\n")
     return trained_model
+
+
+def generate_neurons_in_hidden_layers(
+    n_hidden_layers, n_neurons_first_hidden_layer, n_neurons_last_hidden_layer
+):
+    """
+    Generate number of neurons in hidden layers for hyperparameter tuning.
+
+    :param n_hidden_layers: Number of hidden layers.
+    :param n_neurons_first_hidden_layer: Number of neurons in the first hidden layer.
+    :param n_neurons_last_hidden_layer: Number of neurons in the last hidden layer.
+    """
+
+    n_neurons_in_hidden_layer = []
+    n_neurons_increment = (
+        n_neurons_last_hidden_layer - n_neurons_first_hidden_layer
+    ) / (n_hidden_layers - 1)
+    n_neurons = n_neurons_first_hidden_layer
+    for _ in range(n_hidden_layers):
+        n_neurons_in_hidden_layer.append(math.ceil(n_neurons))
+        n_neurons += n_neurons_increment
+
+    return n_neurons_in_hidden_layer
 
 
 def RegressorHyperParameterSearch():
