@@ -466,7 +466,10 @@ def RegressorHyperParameterSearch():
                 # Error
                 mean_error = mean(errors)
                 print(
-                    f"Regressor error: {mean_error}, layers: {n_layers}, n_neurons_first_hidden_layer: {n_neurons_first_hidden_layer}, n_neurons_last_hidden_layer: {n_neurons_last_hidden_layer}"
+                    f"Regressor error: {mean_error},"
+                    + f" layers: {n_layers},"
+                    + f" n_neurons_first_hidden_layer: {n_neurons_first_hidden_layer},"
+                    + f" n_neurons_last_hidden_layer: {n_neurons_last_hidden_layer}"
                 )
 
                 if mean_error < best_error:
@@ -476,7 +479,9 @@ def RegressorHyperParameterSearch():
                     best_n_neurons_last_hidden_layer = n_neurons_last_hidden_layer
 
     print(
-        f"\nBest overall -> layers: {best_layers}, n_neurons_first_hidden_layer: {best_n_neurons_first_hidden_layer}, n_neurons_last_hidden_layer: {best_n_neurons_last_hidden_layer}"
+        f"\nBest overall -> layers: {best_layers},"
+        + f" n_neurons_first_hidden_layer: {best_n_neurons_first_hidden_layer},"
+        + f" n_neurons_last_hidden_layer: {best_n_neurons_last_hidden_layer}"
     )
 
 
