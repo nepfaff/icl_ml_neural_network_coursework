@@ -314,12 +314,12 @@ class Regressor(nn.Module):
 
         # Evaluating metrics
         evaluated = {
-            #"explained_variance_score": explained_variance_score(Y_true, Y_pred),
+            # "explained_variance_score": explained_variance_score(Y_true, Y_pred),
             "mean_squared_error": mean_squared_error(Y_true, Y_pred),
             "median_absolute_error": median_absolute_error(Y_true, Y_pred),
-            #"r2_score": r2_score(Y_true, Y_pred),
-            #"mean_poisson_deviance": mean_poisson_deviance(Y_true, Y_pred),
-            #"mean_gamma_deviance": mean_gamma_deviance(Y_true, Y_pred),
+            # "r2_score": r2_score(Y_true, Y_pred),
+            # "mean_poisson_deviance": mean_poisson_deviance(Y_true, Y_pred),
+            # "mean_gamma_deviance": mean_gamma_deviance(Y_true, Y_pred),
         }
 
         if print_result:
@@ -376,9 +376,8 @@ def generate_neurons_in_hidden_layers(
 
     return n_neurons_in_hidden_layer
 
-def j_fold_split(
-    n_instances: int, j: int = 3, random_generator=default_rng()
-):
+
+def j_fold_split(n_instances: int, j: int = 3, random_generator=default_rng()):
     """
     Randomises indices and splits them into j folds
 
@@ -425,7 +424,7 @@ def RegressorHyperParameterSearch():
     best_layers = -1
     best_n_neurons_first_hidden_layer = -1
     n_neurons_last_hidden_layer = -1
-    for n_layers in range(11):
+    for n_layers in [1, 3, 5, 8, 10]:
         for n_neurons_first_hidden_layer in [10, 30, 60, 100]:
             for n_neurons_last_hidden_layer in [10, 30, 60, 100]:
                 # Cross-validation
@@ -436,7 +435,9 @@ def RegressorHyperParameterSearch():
                 for i, fold in enumerate(split_indices):
                     # Assign test and train data
                     test_indices = fold
-                    train_indices = np.hstack(split_indices[:i] + split_indices[i + 1 :])
+                    train_indices = np.hstack(
+                        split_indices[:i] + split_indices[i + 1 :]
+                    )
                     x_train = pd.DataFrame(x[train_indices])
                     y_train = pd.DataFrame(y[train_indices])
                     x_test = pd.DataFrame(x[test_indices])
@@ -445,7 +446,7 @@ def RegressorHyperParameterSearch():
                     neurons = generate_neurons_in_hidden_layers(
                         n_layers,
                         n_neurons_first_hidden_layer,
-                        n_neurons_last_hidden_layer
+                        n_neurons_last_hidden_layer,
                     )
                     activations = ["relu" for _ in range(len(neurons))]
                     regressor = Regressor(
@@ -474,7 +475,9 @@ def RegressorHyperParameterSearch():
                     best_n_neurons_first_hidden_layer = n_neurons_first_hidden_layer
                     best_n_neurons_last_hidden_layer = n_neurons_last_hidden_layer
 
-    print(f"\nBest overall -> layers: {best_layers}, n_neurons_first_hidden_layer: {n_neurons_first_hidden_layer}, n_neurons_last_hidden_layer: {n_neurons_last_hidden_layer}")
+    print(
+        f"\nBest overall -> layers: {best_layers}, n_neurons_first_hidden_layer: {best_n_neurons_first_hidden_layer}, n_neurons_last_hidden_layer: {best_n_neurons_last_hidden_layer}"
+    )
 
 
 def example_main():
