@@ -318,6 +318,11 @@ class Regressor(nn.Module):
             "mean_squared_error": mean_squared_error(Y_true, Y_pred),
             "median_absolute_error": median_absolute_error(Y_true, Y_pred),
             "absolute_percentage_error": absolute_percentage_error(Y_true, Y_pred),
+            "mean_percentage_error": mean_percentage_error(Y_true, Y_pred),
+            "median_absolute_percentage_error": median_absolute_percentage_error(
+                Y_true, Y_pred
+            ),
+            "median_percentage_error": median_percentage_error(Y_true, Y_pred),
             # "r2_score": r2_score(Y_true, Y_pred),
             # "mean_poisson_deviance": mean_poisson_deviance(Y_true, Y_pred),
             # "mean_gamma_deviance": mean_gamma_deviance(Y_true, Y_pred),
@@ -641,6 +646,18 @@ def train_model():
 
     # Save model
     save_regressor(regressor)
+
+
+def mean_percentage_error(y_true, y_pred):
+    return (1 / len(y_pred)) * np.sum((y_true - y_pred) / y_true)
+
+
+def median_absolute_percentage_error(y_true, y_pred):
+    return np.median(np.abs(np.subtract(y_true, y_pred) / y_true))
+
+
+def median_percentage_error(y_true, y_pred):
+    return np.median(np.subtract(y_true, y_pred) / y_true)
 
 
 def absolute_percentage_error(y_true, y_pred):
