@@ -317,6 +317,7 @@ class Regressor(nn.Module):
             # "explained_variance_score": explained_variance_score(Y_true, Y_pred),
             "mean_squared_error": mean_squared_error(Y_true, Y_pred),
             "median_absolute_error": median_absolute_error(Y_true, Y_pred),
+            "absolute_percentage_error": absolute_percentage_error(Y_true, Y_pred),
             # "r2_score": r2_score(Y_true, Y_pred),
             # "mean_poisson_deviance": mean_poisson_deviance(Y_true, Y_pred),
             # "mean_gamma_deviance": mean_gamma_deviance(Y_true, Y_pred),
@@ -482,6 +483,10 @@ def RegressorHyperParameterSearch():
         + f" n_neurons_first_hidden_layer: {best_n_neurons_first_hidden_layer},"
         + f" n_neurons_last_hidden_layer: {best_n_neurons_last_hidden_layer}"
     )
+
+
+def absolute_percentage_error(y_true, y_pred):
+    return (1 / len(y_pred)) * np.sum(np.abs((y_true - y_pred) / y_true))
 
 
 def example_main():
