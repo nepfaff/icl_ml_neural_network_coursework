@@ -421,7 +421,7 @@ def RegressorHyperParameterSearch():
     x = data.loc[:, data.columns != output_label].values
     y = data.loc[:, [output_label]].values
 
-    # # Tuning number of layers and number of neurons per layer
+    # Tuning number of layers and number of neurons per layer
     best_error = float("inf")
     for n_layers in [1, 3, 5, 8, 10]:
         for n_neurons_first_hidden_layer in [10, 30, 60, 100]:
@@ -480,6 +480,9 @@ def RegressorHyperParameterSearch():
         + f" n_neurons_first_hidden_layer: {best_n_neurons_first_hidden_layer},"
         + f" n_neurons_last_hidden_layer: {best_n_neurons_last_hidden_layer}"
     )
+
+    # TODO: remove this
+    return
 
     # From above, we decided on 2 linear layers with 60 and 30 neurons
     neurons = [60, 30]
