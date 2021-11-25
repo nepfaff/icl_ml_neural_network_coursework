@@ -665,5 +665,5 @@ def main():
 
 
 if __name__ == "__main__":
-    # RegressorHyperParameterSearch()
-    main()
+    RegressorHyperParameterSearch()
+    # main()
