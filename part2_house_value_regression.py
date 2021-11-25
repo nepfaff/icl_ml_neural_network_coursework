@@ -535,46 +535,43 @@ def RegressorHyperParameterSearch():
     activations = ["tanh", "tanh", "tanh"]
 
     # Tune batch size
-    best_error = float("inf")
-    for batch_size in [100, 2000, 5000, 10000, 20000]:
-        # Cross-validation
-        errors = []
+    # best_error = float("inf")
+    # for batch_size in [100, 2000, 5000, 10000, 20000]:
+    #     # Cross-validation
+    #     errors = []
 
-        # Randomise data & split code into j folds
-        split_indices = j_fold_split(len(x), 3)
-        for i, fold in enumerate(split_indices):
-            # Assign test and train data
-            test_indices = fold
-            train_indices = np.hstack(split_indices[:i] + split_indices[i + 1 :])
-            x_train = pd.DataFrame(x[train_indices])
-            y_train = pd.DataFrame(y[train_indices])
-            x_test = pd.DataFrame(x[test_indices])
-            y_test = pd.DataFrame(y[test_indices])
+    #     # Randomise data & split code into j folds
+    #     split_indices = j_fold_split(len(x), 3)
+    #     for i, fold in enumerate(split_indices):
+    #         # Assign test and train data
+    #         test_indices = fold
+    #         train_indices = np.hstack(split_indices[:i] + split_indices[i + 1 :])
+    #         x_train = pd.DataFrame(x[train_indices])
+    #         y_train = pd.DataFrame(y[train_indices])
+    #         x_test = pd.DataFrame(x[test_indices])
+    #         y_test = pd.DataFrame(y[test_indices])
 
-            regressor = Regressor(
-                x_train,
-                nb_epoch=500,
-                batch_size=batch_size,
-                neurons=neurons[:],
-                activations=activations[:],
-                optimizer_type="adadelta",
-            )
-            regressor.fit(x_train, y_train)
+    #         regressor = Regressor(
+    #             x_train,
+    #             nb_epoch=500,
+    #             batch_size=batch_size,
+    #             neurons=neurons[:],
+    #             activations=activations[:],
+    #             optimizer_type="adadelta",
+    #         )
+    #         regressor.fit(x_train, y_train)
 
-            error = regressor.score(x_test, y_test)
-            errors.append(error)
+    #         error = regressor.score(x_test, y_test)
+    #         errors.append(error)
 
-        # Error
-        mean_error = mean(errors)
-        print(f"Regressor error: {mean_error}," + f" batch size: {batch_size}")
+    #     # Error
+    #     mean_error = mean(errors)
+    #     print(f"Regressor error: {mean_error}," + f" batch size: {batch_size}")
 
-        if mean_error < best_error:
-            best_error = mean_error
-            best_batch_size = batch_size
-    print(f"\nBest overall (batch size) -> batch size: {best_batch_size}")
-
-    # TODO: remove this
-    return
+    #     if mean_error < best_error:
+    #         best_error = mean_error
+    #         best_batch_size = batch_size
+    # print(f"\nBest overall (batch size) -> batch size: {best_batch_size}")
 
     # From above
     batch_size = 2000
