@@ -420,76 +420,202 @@ def RegressorHyperParameterSearch():
     x = data.loc[:, data.columns != output_label].values
     y = data.loc[:, [output_label]].values
 
-    # Training
+    # # Tuning number of layers and number of neurons per layer
+    # best_error = float("inf")
+    # for n_layers in [1, 3, 5, 8, 10]:
+    #     for n_neurons_first_hidden_layer in [10, 30, 60, 100]:
+    #         for n_neurons_last_hidden_layer in [10, 30, 60, 100]:
+    #             # Cross-validation
+    #             errors = []
+
+    #             # Randomise data & split code into j folds
+    #             split_indices = j_fold_split(len(x), 3)
+    #             for i, fold in enumerate(split_indices):
+    #                 # Assign test and train data
+    #                 test_indices = fold
+    #                 train_indices = np.hstack(
+    #                     split_indices[:i] + split_indices[i + 1 :]
+    #                 )
+    #                 x_train = pd.DataFrame(x[train_indices])
+    #                 y_train = pd.DataFrame(y[train_indices])
+    #                 x_test = pd.DataFrame(x[test_indices])
+    #                 y_test = pd.DataFrame(y[test_indices])
+
+    #                 neurons = generate_neurons_in_hidden_layers(
+    #                     n_layers,
+    #                     n_neurons_first_hidden_layer,
+    #                     n_neurons_last_hidden_layer,
+    #                 )
+    #                 activations = ["relu" for _ in range(len(neurons))]
+    #                 regressor = Regressor(
+    #                     x_train,
+    #                     nb_epoch=500,
+    #                     batch_size=2000,
+    #                     neurons=neurons,
+    #                     activations=activations,
+    #                     optimizer_type="adadelta",
+    #                 )
+    #                 regressor.fit(x_train, y_train)
+
+    #                 error = regressor.score(x_test, y_test)
+    #                 errors.append(error)
+
+    #             # Error
+    #             mean_error = mean(errors)
+    #             print(
+    #                 f"Regressor error: {mean_error},"
+    #                 + f" layers: {n_layers},"
+    #                 + f" n_neurons_first_hidden_layer: {n_neurons_first_hidden_layer},"
+    #                 + f" n_neurons_last_hidden_layer: {n_neurons_last_hidden_layer}"
+    #             )
+
+    #             if mean_error < best_error:
+    #                 best_error = mean_error
+    #                 best_layers = n_layers
+    #                 best_n_neurons_first_hidden_layer = n_neurons_first_hidden_layer
+    #                 best_n_neurons_last_hidden_layer = n_neurons_last_hidden_layer
+    # print(
+    #     f"\nBest overall (layers and neurons) -> layers: {best_layers},"
+    #     + f" n_neurons_first_hidden_layer: {best_n_neurons_first_hidden_layer},"
+    #     + f" n_neurons_last_hidden_layer: {best_n_neurons_last_hidden_layer}"
+    # )
+
+    # From above, we decided on 2 linear layers with 60 and 30 neurons
+    neurons = [60, 30]
+
+    # Tune activation function (same for all layers)
+    # best_error = float("inf")
+    # for activation_func in ["relu", "sigmoid", "tanh"]:
+    #     # Cross-validation
+    #     errors = []
+
+    #     # Randomise data & split code into j folds
+    #     split_indices = j_fold_split(len(x), 3)
+    #     for i, fold in enumerate(split_indices):
+    #         # Assign test and train data
+    #         test_indices = fold
+    #         train_indices = np.hstack(split_indices[:i] + split_indices[i + 1 :])
+    #         x_train = pd.DataFrame(x[train_indices])
+    #         y_train = pd.DataFrame(y[train_indices])
+    #         x_test = pd.DataFrame(x[test_indices])
+    #         y_test = pd.DataFrame(y[test_indices])
+
+    #         activations = [activation_func for _ in range(len(neurons))]
+    #         regressor = Regressor(
+    #             x_train,
+    #             nb_epoch=500,
+    #             batch_size=2000,
+    #             neurons=neurons,
+    #             activations=activations,
+    #             optimizer_type="adadelta",
+    #         )
+    #         regressor.fit(x_train, y_train)
+
+    #         error = regressor.score(x_test, y_test)
+    #         errors.append(error)
+
+    #     # Error
+    #     mean_error = mean(errors)
+    #     print(
+    #         f"Regressor error: {mean_error},"
+    #         + f" activation function: {activation_func}"
+    #     )
+
+    #     if mean_error < best_error:
+    #         best_error = mean_error
+    #         best_activation_func = activation_func
+    # print(
+    #     f"\nBest overall (activation function) -> activation function: {best_activation_func}"
+    # )
+
+    # From above
+    activations = ["tanh", "tanh"]
+
+    # Tune batch size
     best_error = float("inf")
-    best_layers = -1
-    best_n_neurons_first_hidden_layer = -1
-    n_neurons_last_hidden_layer = -1
-    for n_layers in [1, 3, 5, 8, 10]:
-        for n_neurons_first_hidden_layer in [10, 30, 60, 100]:
-            for n_neurons_last_hidden_layer in [10, 30, 60, 100]:
-                # Cross-validation
-                errors = []
+    for batch_size in [100, 2000, 5000, 10000, 20000]:
+        # Cross-validation
+        errors = []
 
-                # Randomise data & split code into j folds
-                split_indices = j_fold_split(len(x), 3)
-                for i, fold in enumerate(split_indices):
-                    # Assign test and train data
-                    test_indices = fold
-                    train_indices = np.hstack(
-                        split_indices[:i] + split_indices[i + 1 :]
-                    )
-                    x_train = pd.DataFrame(x[train_indices])
-                    y_train = pd.DataFrame(y[train_indices])
-                    x_test = pd.DataFrame(x[test_indices])
-                    y_test = pd.DataFrame(y[test_indices])
+        # Randomise data & split code into j folds
+        split_indices = j_fold_split(len(x), 3)
+        for i, fold in enumerate(split_indices):
+            # Assign test and train data
+            test_indices = fold
+            train_indices = np.hstack(split_indices[:i] + split_indices[i + 1 :])
+            x_train = pd.DataFrame(x[train_indices])
+            y_train = pd.DataFrame(y[train_indices])
+            x_test = pd.DataFrame(x[test_indices])
+            y_test = pd.DataFrame(y[test_indices])
 
-                    neurons = generate_neurons_in_hidden_layers(
-                        n_layers,
-                        n_neurons_first_hidden_layer,
-                        n_neurons_last_hidden_layer,
-                    )
-                    activations = ["relu" for _ in range(len(neurons))]
-                    regressor = Regressor(
-                        x_train,
-                        nb_epoch=500,
-                        batch_size=2000,
-                        neurons=neurons,
-                        activations=activations,
-                        optimizer_type="adadelta",
-                    )
-                    regressor.fit(x_train, y_train)
+            activations = ["relu" for _ in range(len(neurons))]
+            regressor = Regressor(
+                x_train,
+                nb_epoch=500,
+                batch_size=batch_size,
+                neurons=neurons,
+                activations=activations,
+                optimizer_type="adadelta",
+            )
+            regressor.fit(x_train, y_train)
 
-                    error = regressor.score(x_test, y_test)
-                    errors.append(error)
+            error = regressor.score(x_test, y_test)
+            errors.append(error)
 
-                # Error
-                mean_error = mean(errors)
-                print(
-                    f"Regressor error: {mean_error},"
-                    + f" layers: {n_layers},"
-                    + f" n_neurons_first_hidden_layer: {n_neurons_first_hidden_layer},"
-                    + f" n_neurons_last_hidden_layer: {n_neurons_last_hidden_layer}"
-                )
+        # Error
+        mean_error = mean(errors)
+        print(f"Regressor error: {mean_error}," + f" batch size: {batch_size}")
 
-                if mean_error < best_error:
-                    best_error = mean_error
-                    best_layers = n_layers
-                    best_n_neurons_first_hidden_layer = n_neurons_first_hidden_layer
-                    best_n_neurons_last_hidden_layer = n_neurons_last_hidden_layer
+        if mean_error < best_error:
+            best_error = mean_error
+            best_batch_size = batch_size
+    print(f"\nBest overall (batch size) -> batch size: {best_batch_size}")
 
-    print(
-        f"\nBest overall -> layers: {best_layers},"
-        + f" n_neurons_first_hidden_layer: {best_n_neurons_first_hidden_layer},"
-        + f" n_neurons_last_hidden_layer: {best_n_neurons_last_hidden_layer}"
-    )
+    # Tune number of epochs
+    # best_error = float("inf")
+    # for n_epochs in [100, 500, 1000, 5000]:
+    #     # Cross-validation
+    #     errors = []
+
+    #     # Randomise data & split code into j folds
+    #     split_indices = j_fold_split(len(x), 3)
+    #     for i, fold in enumerate(split_indices):
+    #         # Assign test and train data
+    #         test_indices = fold
+    #         train_indices = np.hstack(split_indices[:i] + split_indices[i + 1 :])
+    #         x_train = pd.DataFrame(x[train_indices])
+    #         y_train = pd.DataFrame(y[train_indices])
+    #         x_test = pd.DataFrame(x[test_indices])
+    #         y_test = pd.DataFrame(y[test_indices])
+
+    #         regressor = Regressor(
+    #             x_train,
+    #             nb_epoch=n_epochs,
+    #             batch_size=2000,
+    #             neurons=neurons,
+    #             activations=activations,
+    #             optimizer_type="adadelta",
+    #         )
+    #         regressor.fit(x_train, y_train)
+
+    #         error = regressor.score(x_test, y_test)
+    #         errors.append(error)
+
+    #     # Error
+    #     mean_error = mean(errors)
+    #     print(f"Regressor error: {mean_error}," + f" number of epochs: {n_epochs}")
+
+    #     if mean_error < best_error:
+    #         best_error = mean_error
+    #         best_n_epochs = n_epochs
+    # print(f"\nBest overall (epochs) -> number of epochs: {best_n_epochs}")
 
 
-def absolute_percentage_error(y_true, y_pred):
-    return (1 / len(y_pred)) * np.sum(np.abs((y_true - y_pred) / y_true))
+def train_model():
+    """
+    Trains and saves a model.
+    """
 
-
-def example_main():
     # Use pandas to read CSV data as it contains various object types
     data = pd.read_csv("housing.csv")
     output_label = "median_house_value"
@@ -502,25 +628,23 @@ def example_main():
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
 
     # Training
-    neurons = [30, 15]
-    activations = ["relu", "relu"]
     regressor = Regressor(
         x_train,
         nb_epoch=500,
         batch_size=2000,
         learning_rate=1e-2,
-        neurons=neurons,
-        activations=activations,
+        neurons=[60, 30],
+        activations=["relu", "relu"],
         optimizer_type="sgd",
     )
     regressor.fit(x_train, y_train, log=True, number_of_logs=10)
 
     # Save model
-    # save_regressor(regressor)
+    save_regressor(regressor)
 
-    # Error
-    error = regressor.score(x_test, y_test)
-    print("\nRegressor error: {}\n".format(error))
+
+def absolute_percentage_error(y_true, y_pred):
+    return (1 / len(y_pred)) * np.sum(np.abs((y_true - y_pred) / y_true))
 
 
 if __name__ == "__main__":
