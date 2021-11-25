@@ -537,48 +537,8 @@ def RegressorHyperParameterSearch():
     activations = ["tanh", "tanh"]
 
     # Tune batch size
-    best_error = float("inf")
-    for batch_size in [100, 2000, 5000, 10000, 20000]:
-        # Cross-validation
-        errors = []
-
-        # Randomise data & split code into j folds
-        split_indices = j_fold_split(len(x), 3)
-        for i, fold in enumerate(split_indices):
-            # Assign test and train data
-            test_indices = fold
-            train_indices = np.hstack(split_indices[:i] + split_indices[i + 1 :])
-            x_train = pd.DataFrame(x[train_indices])
-            y_train = pd.DataFrame(y[train_indices])
-            x_test = pd.DataFrame(x[test_indices])
-            y_test = pd.DataFrame(y[test_indices])
-
-            activations = ["relu" for _ in range(len(neurons))]
-            regressor = Regressor(
-                x_train,
-                nb_epoch=500,
-                batch_size=batch_size,
-                neurons=neurons,
-                activations=activations,
-                optimizer_type="adadelta",
-            )
-            regressor.fit(x_train, y_train)
-
-            error = regressor.score(x_test, y_test)
-            errors.append(error)
-
-        # Error
-        mean_error = mean(errors)
-        print(f"Regressor error: {mean_error}," + f" batch size: {batch_size}")
-
-        if mean_error < best_error:
-            best_error = mean_error
-            best_batch_size = batch_size
-    print(f"\nBest overall (batch size) -> batch size: {best_batch_size}")
-
-    # Tune number of epochs
     # best_error = float("inf")
-    # for n_epochs in [100, 500, 1000, 5000]:
+    # for batch_size in [100, 2000, 5000, 10000, 20000]:
     #     # Cross-validation
     #     errors = []
 
@@ -593,10 +553,11 @@ def RegressorHyperParameterSearch():
     #         x_test = pd.DataFrame(x[test_indices])
     #         y_test = pd.DataFrame(y[test_indices])
 
+    #         activations = ["relu" for _ in range(len(neurons))]
     #         regressor = Regressor(
     #             x_train,
-    #             nb_epoch=n_epochs,
-    #             batch_size=2000,
+    #             nb_epoch=500,
+    #             batch_size=batch_size,
     #             neurons=neurons,
     #             activations=activations,
     #             optimizer_type="adadelta",
@@ -608,44 +569,54 @@ def RegressorHyperParameterSearch():
 
     #     # Error
     #     mean_error = mean(errors)
-    #     print(f"Regressor error: {mean_error}," + f" number of epochs: {n_epochs}")
+    #     print(f"Regressor error: {mean_error}," + f" batch size: {batch_size}")
 
     #     if mean_error < best_error:
     #         best_error = mean_error
-    #         best_n_epochs = n_epochs
-    # print(f"\nBest overall (epochs) -> number of epochs: {best_n_epochs}")
+    #         best_batch_size = batch_size
+    # print(f"\nBest overall (batch size) -> batch size: {best_batch_size}")
 
+    # From above
+    batch_size = 2000
 
-def train_model():
-    """
-    Trains and saves a model.
-    """
+    # Tune number of epochs
+    best_error = float("inf")
+    for n_epochs in [100, 500, 1000, 5000]:
+        # Cross-validation
+        errors = []
 
-    # Use pandas to read CSV data as it contains various object types
-    data = pd.read_csv("housing.csv")
-    output_label = "median_house_value"
+        # Randomise data & split code into j folds
+        split_indices = j_fold_split(len(x), 3)
+        for i, fold in enumerate(split_indices):
+            # Assign test and train data
+            test_indices = fold
+            train_indices = np.hstack(split_indices[:i] + split_indices[i + 1 :])
+            x_train = pd.DataFrame(x[train_indices])
+            y_train = pd.DataFrame(y[train_indices])
+            x_test = pd.DataFrame(x[test_indices])
+            y_test = pd.DataFrame(y[test_indices])
 
-    # Spliting input and output
-    x = data.loc[:, data.columns != output_label]
-    y = data.loc[:, [output_label]]
+            regressor = Regressor(
+                x_train,
+                nb_epoch=n_epochs,
+                batch_size=batch_size,
+                neurons=neurons,
+                activations=activations,
+                optimizer_type="adadelta",
+            )
+            regressor.fit(x_train, y_train)
 
-    # Splitting into training and test
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
+            error = regressor.score(x_test, y_test)
+            errors.append(error)
 
-    # Training
-    regressor = Regressor(
-        x_train,
-        nb_epoch=500,
-        batch_size=2000,
-        learning_rate=1e-2,
-        neurons=[60, 30],
-        activations=["relu", "relu"],
-        optimizer_type="sgd",
-    )
-    regressor.fit(x_train, y_train, log=True, number_of_logs=10)
+        # Error
+        mean_error = mean(errors)
+        print(f"Regressor error: {mean_error}," + f" number of epochs: {n_epochs}")
 
-    # Save model
-    save_regressor(regressor)
+        if mean_error < best_error:
+            best_error = mean_error
+            best_n_epochs = n_epochs
+    print(f"\nBest overall (epochs) -> number of epochs: {best_n_epochs}")
 
 
 def mean_percentage_error(y_true, y_pred):
@@ -662,6 +633,37 @@ def median_percentage_error(y_true, y_pred):
 
 def absolute_percentage_error(y_true, y_pred):
     return (1 / len(y_pred)) * np.sum(np.abs((y_true - y_pred) / y_true))
+
+
+def main():
+    # Use pandas to read CSV data as it contains various object types
+    data = pd.read_csv("housing.csv")
+    output_label = "median_house_value"
+
+    # Spliting input and output
+    x = data.loc[:, data.columns != output_label]
+    y = data.loc[:, [output_label]]
+
+    # Splitting into training and test
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
+
+    # Train model using the best found hyperparameters
+    regressor = Regressor(
+        x_train,
+        nb_epoch=500,
+        batch_size=2000,
+        learning_rate=1e-2,
+        neurons=[60, 30],
+        activations=["relu", "relu"],
+        optimizer_type="sgd",
+    )
+    regressor.fit(x_train, y_train)
+
+    # Evaluate model (metrics are printed)
+    regressor.score(x_test, y_test)
+
+    # Save model
+    save_regressor(regressor)
 
 
 if __name__ == "__main__":
