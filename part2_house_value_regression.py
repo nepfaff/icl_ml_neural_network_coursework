@@ -453,10 +453,9 @@ def RegressorHyperParameterSearch():
                         x_train,
                         nb_epoch=500,
                         batch_size=2000,
-                        learning_rate=1e-2,
                         neurons=neurons,
                         activations=activations,
-                        optimizer_type="sgd",
+                        optimizer_type="adadelta",
                     )
                     regressor.fit(x_train, y_train)
 
