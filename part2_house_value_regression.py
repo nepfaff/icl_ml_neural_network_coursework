@@ -300,7 +300,8 @@ class Regressor(nn.Module):
             {float} -- Quantification of the efficiency of the model.
 
         """
-        _, Y_true = self._preprocessor(x, y=y, training=False)  # Do not forget
+        _, Y_true = self._preprocessor(x, y=y, training=False)
+        Y_true *= self._y_scale  # Scale back up
 
         # Predict output, this function preprocess data itself so use raw data as argument
         Y_pred = self.predict(x)
@@ -626,6 +627,7 @@ def median_percentage_error(y_true, y_pred):
 
 
 def absolute_percentage_error(y_true, y_pred):
+    print(np.mean(y_true - y_pred), np.mean(y_true), np.mean(y_pred))
     return (1 / len(y_pred)) * np.sum(np.abs((y_true - y_pred) / y_true))
 
 
@@ -646,20 +648,19 @@ def main():
         x_train,
         nb_epoch=500,
         batch_size=2000,
-        learning_rate=1e-2,
         neurons=[60, 30],
         activations=["relu", "relu"],
-        optimizer_type="sgd",
+        optimizer_type="adadelta",
     )
     regressor.fit(x_train, y_train)
 
     # Evaluate model (metrics are printed)
-    regressor.score(x_test, y_test)
+    regressor.score(x_test, y_test, print_result=True)
 
     # Save model
     save_regressor(regressor)
 
 
 if __name__ == "__main__":
-    # example_main()
-    RegressorHyperParameterSearch()
+    # RegressorHyperParameterSearch()
+    main()
