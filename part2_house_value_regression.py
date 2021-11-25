@@ -316,7 +316,9 @@ class Regressor(nn.Module):
         # Evaluating metrics
         evaluated = {
             "mean_squared_error": mean_squared_error(Y_true, Y_pred),
-            "absolute_percentage_error": absolute_percentage_error(Y_true, Y_pred),
+            "mean_absolute_percentage_error": mean_absolute_percentage_error(
+                Y_true, Y_pred
+            ),
             "mean_percentage_error": mean_percentage_error(Y_true, Y_pred),
             "median_absolute_percentage_error": median_absolute_percentage_error(
                 Y_true, Y_pred
@@ -422,70 +424,67 @@ def RegressorHyperParameterSearch():
     y = data.loc[:, [output_label]].values
 
     # Tuning number of layers and number of neurons per layer
-    best_error = float("inf")
-    for n_layers in [1, 3, 5, 8, 10]:
-        for n_neurons_first_hidden_layer in [10, 30, 60, 100]:
-            for n_neurons_last_hidden_layer in [10, 30, 60, 100]:
-                # Cross-validation
-                errors = []
+    # best_error = float("inf")
+    # for n_layers in [1, 3, 5, 8, 10]:
+    #     for n_neurons_first_hidden_layer in [10, 30, 60, 100]:
+    #         for n_neurons_last_hidden_layer in [10, 30, 60, 100]:
+    #             # Cross-validation
+    #             errors = []
 
-                # Randomise data & split code into j folds
-                split_indices = j_fold_split(len(x), 3)
-                for i, fold in enumerate(split_indices):
-                    # Assign test and train data
-                    test_indices = fold
-                    train_indices = np.hstack(
-                        split_indices[:i] + split_indices[i + 1 :]
-                    )
-                    x_train = pd.DataFrame(x[train_indices])
-                    y_train = pd.DataFrame(y[train_indices])
-                    x_test = pd.DataFrame(x[test_indices])
-                    y_test = pd.DataFrame(y[test_indices])
+    #             # Randomise data & split code into j folds
+    #             split_indices = j_fold_split(len(x), 3)
+    #             for i, fold in enumerate(split_indices):
+    #                 # Assign test and train data
+    #                 test_indices = fold
+    #                 train_indices = np.hstack(
+    #                     split_indices[:i] + split_indices[i + 1 :]
+    #                 )
+    #                 x_train = pd.DataFrame(x[train_indices])
+    #                 y_train = pd.DataFrame(y[train_indices])
+    #                 x_test = pd.DataFrame(x[test_indices])
+    #                 y_test = pd.DataFrame(y[test_indices])
 
-                    neurons = generate_neurons_in_hidden_layers(
-                        n_layers,
-                        n_neurons_first_hidden_layer,
-                        n_neurons_last_hidden_layer,
-                    )
-                    activations = ["relu" for _ in range(len(neurons))]
-                    regressor = Regressor(
-                        x_train,
-                        nb_epoch=500,
-                        batch_size=2000,
-                        neurons=neurons,
-                        activations=activations,
-                        optimizer_type="adadelta",
-                    )
-                    regressor.fit(x_train, y_train)
+    #                 neurons = generate_neurons_in_hidden_layers(
+    #                     n_layers,
+    #                     n_neurons_first_hidden_layer,
+    #                     n_neurons_last_hidden_layer,
+    #                 )
+    #                 activations = ["relu" for _ in range(len(neurons))]
+    #                 regressor = Regressor(
+    #                     x_train,
+    #                     nb_epoch=500,
+    #                     batch_size=2000,
+    #                     neurons=neurons,
+    #                     activations=activations,
+    #                     optimizer_type="adadelta",
+    #                 )
+    #                 regressor.fit(x_train, y_train)
 
-                    error = regressor.score(x_test, y_test)
-                    errors.append(error)
+    #                 error = regressor.score(x_test, y_test)
+    #                 errors.append(error)
 
-                # Error
-                mean_error = mean(errors)
-                print(
-                    f"Regressor error: {mean_error},"
-                    + f" layers: {n_layers},"
-                    + f" n_neurons_first_hidden_layer: {n_neurons_first_hidden_layer},"
-                    + f" n_neurons_last_hidden_layer: {n_neurons_last_hidden_layer}"
-                )
+    #             # Error
+    #             mean_error = mean(errors)
+    #             print(
+    #                 f"Regressor error: {mean_error},"
+    #                 + f" layers: {n_layers},"
+    #                 + f" n_neurons_first_hidden_layer: {n_neurons_first_hidden_layer},"
+    #                 + f" n_neurons_last_hidden_layer: {n_neurons_last_hidden_layer}"
+    #             )
 
-                if mean_error < best_error:
-                    best_error = mean_error
-                    best_layers = n_layers
-                    best_n_neurons_first_hidden_layer = n_neurons_first_hidden_layer
-                    best_n_neurons_last_hidden_layer = n_neurons_last_hidden_layer
-    print(
-        f"\nBest overall (layers and neurons) -> layers: {best_layers},"
-        + f" n_neurons_first_hidden_layer: {best_n_neurons_first_hidden_layer},"
-        + f" n_neurons_last_hidden_layer: {best_n_neurons_last_hidden_layer}"
-    )
+    #             if mean_error < best_error:
+    #                 best_error = mean_error
+    #                 best_layers = n_layers
+    #                 best_n_neurons_first_hidden_layer = n_neurons_first_hidden_layer
+    #                 best_n_neurons_last_hidden_layer = n_neurons_last_hidden_layer
+    # print(
+    #     f"\nBest overall (layers and neurons) -> layers: {best_layers},"
+    #     + f" n_neurons_first_hidden_layer: {best_n_neurons_first_hidden_layer},"
+    #     + f" n_neurons_last_hidden_layer: {best_n_neurons_last_hidden_layer}"
+    # )
 
-    # TODO: remove this
-    return
-
-    # From above, we decided on 2 linear layers with 60 and 30 neurons
-    neurons = [60, 30]
+    # From above, we decided on 3 linear layers with 100, 65, and 30 neurons
+    neurons = [100, 65, 30]
 
     # Tune activation function (same for all layers)
     best_error = float("inf")
@@ -531,6 +530,9 @@ def RegressorHyperParameterSearch():
     print(
         f"\nBest overall (activation function) -> activation function: {best_activation_func}"
     )
+
+    # TODO: remove this
+    return
 
     # From above
     activations = ["tanh", "tanh"]
@@ -629,7 +631,7 @@ def median_percentage_error(y_true, y_pred):
     return np.median(np.subtract(y_true, y_pred) / y_true)
 
 
-def absolute_percentage_error(y_true, y_pred):
+def mean_absolute_percentage_error(y_true, y_pred):
     print(np.mean(y_true - y_pred), np.mean(y_true), np.mean(y_pred))
     return (1 / len(y_pred)) * np.sum(np.abs((y_true - y_pred) / y_true))
 
@@ -665,5 +667,5 @@ def main():
 
 
 if __name__ == "__main__":
-    RegressorHyperParameterSearch()
-    # main()
+    # RegressorHyperParameterSearch()
+    main()
