@@ -487,55 +487,52 @@ def RegressorHyperParameterSearch():
     neurons = [100, 65, 30]
 
     # Tune activation function (same for all layers)
-    best_error = float("inf")
-    for activation_func in ["relu", "sigmoid", "tanh"]:
-        # Cross-validation
-        errors = []
+    # best_error = float("inf")
+    # for activation_func in ["relu", "sigmoid", "tanh"]:
+    #     # Cross-validation
+    #     errors = []
 
-        # Randomise data & split code into j folds
-        split_indices = j_fold_split(len(x), 3)
-        for i, fold in enumerate(split_indices):
-            # Assign test and train data
-            test_indices = fold
-            train_indices = np.hstack(split_indices[:i] + split_indices[i + 1 :])
-            x_train = pd.DataFrame(x[train_indices])
-            y_train = pd.DataFrame(y[train_indices])
-            x_test = pd.DataFrame(x[test_indices])
-            y_test = pd.DataFrame(y[test_indices])
+    #     # Randomise data & split code into j folds
+    #     split_indices = j_fold_split(len(x), 3)
+    #     for i, fold in enumerate(split_indices):
+    #         # Assign test and train data
+    #         test_indices = fold
+    #         train_indices = np.hstack(split_indices[:i] + split_indices[i + 1 :])
+    #         x_train = pd.DataFrame(x[train_indices])
+    #         y_train = pd.DataFrame(y[train_indices])
+    #         x_test = pd.DataFrame(x[test_indices])
+    #         y_test = pd.DataFrame(y[test_indices])
 
-            activations = [activation_func for _ in range(len(neurons))]
-            regressor = Regressor(
-                x_train,
-                nb_epoch=500,
-                batch_size=2000,
-                neurons=neurons[:],
-                activations=activations,
-                optimizer_type="adadelta",
-            )
-            regressor.fit(x_train, y_train)
+    #         activations = [activation_func for _ in range(len(neurons))]
+    #         regressor = Regressor(
+    #             x_train,
+    #             nb_epoch=500,
+    #             batch_size=2000,
+    #             neurons=neurons[:],
+    #             activations=activations,
+    #             optimizer_type="adadelta",
+    #         )
+    #         regressor.fit(x_train, y_train)
 
-            error = regressor.score(x_test, y_test)
-            errors.append(error)
+    #         error = regressor.score(x_test, y_test)
+    #         errors.append(error)
 
-        # Error
-        mean_error = mean(errors)
-        print(
-            f"Regressor error: {mean_error},"
-            + f" activation function: {activation_func}"
-        )
+    #     # Error
+    #     mean_error = mean(errors)
+    #     print(
+    #         f"Regressor error: {mean_error},"
+    #         + f" activation function: {activation_func}"
+    #     )
 
-        if mean_error < best_error:
-            best_error = mean_error
-            best_activation_func = activation_func
-    print(
-        f"\nBest overall (activation function) -> activation function: {best_activation_func}"
-    )
-
-    # TODO: remove this
-    return
+    #     if mean_error < best_error:
+    #         best_error = mean_error
+    #         best_activation_func = activation_func
+    # print(
+    #     f"\nBest overall (activation function) -> activation function: {best_activation_func}"
+    # )
 
     # From above
-    activations = ["tanh", "tanh"]
+    activations = ["tanh", "tanh", "tanh"]
 
     # Tune batch size
     best_error = float("inf")
@@ -575,6 +572,9 @@ def RegressorHyperParameterSearch():
             best_error = mean_error
             best_batch_size = batch_size
     print(f"\nBest overall (batch size) -> batch size: {best_batch_size}")
+
+    # TODO: remove this
+    return
 
     # From above
     batch_size = 2000
