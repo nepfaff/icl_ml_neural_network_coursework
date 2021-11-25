@@ -314,18 +314,13 @@ class Regressor(nn.Module):
 
         # Evaluating metrics
         evaluated = {
-            # "explained_variance_score": explained_variance_score(Y_true, Y_pred),
             "mean_squared_error": mean_squared_error(Y_true, Y_pred),
-            "median_absolute_error": median_absolute_error(Y_true, Y_pred),
             "absolute_percentage_error": absolute_percentage_error(Y_true, Y_pred),
             "mean_percentage_error": mean_percentage_error(Y_true, Y_pred),
             "median_absolute_percentage_error": median_absolute_percentage_error(
                 Y_true, Y_pred
             ),
             "median_percentage_error": median_percentage_error(Y_true, Y_pred),
-            # "r2_score": r2_score(Y_true, Y_pred),
-            # "mean_poisson_deviance": mean_poisson_deviance(Y_true, Y_pred),
-            # "mean_gamma_deviance": mean_gamma_deviance(Y_true, Y_pred),
         }
 
         if print_result:
