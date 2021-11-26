@@ -63,3 +63,9 @@ regressor.score(
 ### Tuning hyperparameters
 
 The function `part2_house_value_regression.py:RegressorHyperParameterSearch` can be called without arguments for tuning the hyperparameters. The logic behind this is described in the report. This function is meant to be used interactively rather than just being called once. This means that one should comment out all tuning sections apart from one section. The results of the previous section should then be used for tuning the following sections. The ordering of sections in `part2_house_value_regression.py:RegressorHyperParameterSearch` corresponds to the order used for obtaining the final set of hyperparameters. See the docstring for further information.
+
+### Tests
+
+Unit tests where added when possible and deamed useful. These can be run from the main directory using `pytest-3`.
+
+Further tests where added as Jupyter notebooks. These are not unit tests but more complete tests.
