@@ -639,7 +639,6 @@ def median_percentage_error(y_true, y_pred):
 
 
 def mean_absolute_percentage_error(y_true, y_pred):
-    print(np.mean(y_true - y_pred), np.mean(y_true), np.mean(y_pred))
     return (1 / len(y_pred)) * np.sum(np.abs((y_true - y_pred) / y_true))
 
 
