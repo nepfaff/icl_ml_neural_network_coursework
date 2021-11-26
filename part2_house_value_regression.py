@@ -31,8 +31,8 @@ class Regressor(nn.Module):
         learning_rate=1e-3,
         optimizer_type="sgd",
         NaN_remove_rows=False,
-        NaN_mean_of_columns=False,
-        NaN_fill_with_0=True,
+        NaN_mean_of_columns=True,
+        NaN_fill_with_0=False,
         standardization_or_MinMax=True,
     ):
         # You can add any input parameters you need
@@ -59,9 +59,12 @@ class Regressor(nn.Module):
                 'optimizer_type' is "sgd".
             - optimizer_type {str} -- The optimizer type to use. One of "sgd",
                 "adadelta", or "adam".
-            - NaN_remove_rows {bool} -- Remove rows containing NaN in preprocessor method
-            - NaN_mean_of_columns {bool} -- Replace NaN with mean of respective coulmun in preprocessor method
-            - NaN_fill_with_0 {bool} -- Replace NaN with 0 in preprocessor method
+            - NaN_remove_rows {bool} -- Remove rows containing NaN in preprocessor method. Note that only one
+                of 'NaN_remove_rows', 'NaN_mean_of_columns', and 'NaN_fill_with_0' should be True at once.
+            - NaN_mean_of_columns {bool} -- Replace NaN with mean of respective coulmun in preprocessor method. Note
+                that only one of 'NaN_remove_rows', 'NaN_mean_of_columns', and 'NaN_fill_with_0' should be True at once.
+            - NaN_fill_with_0 {bool} -- Replace NaN with 0 in preprocessor method. Note that only one
+                of 'NaN_remove_rows', 'NaN_mean_of_columns', and 'NaN_fill_with_0' should be True at once.
             - standardization_or_MinMax {bool} -- If true perfrom standardization when preprocessing data.
                 If false perform MinMax normalization when preprocessing data.
         """
@@ -196,7 +199,6 @@ class Regressor(nn.Module):
                 # Perform Standardization
                 ss = preprocessing.StandardScaler()
                 x = ss.fit_transform(x)
-                # y = ss.fit_transform(y)
 
                 # Store Standardization preprocessing parameters
                 self.ss_training = ss
@@ -402,13 +404,17 @@ def j_fold_split(n_instances: int, j: int = 3, random_generator=default_rng()):
 
 
 def RegressorHyperParameterSearch():
-    # Ensure to add whatever inputs you deem necessary to this function
     """
     Performs a hyper-parameter for fine-tuning the regressor implemented
     in the Regressor class.
-
-    Arguments:
-        Add whatever inputs you need.
+    This function is not meant to be run as is but interactively section by section.
+    It is recommended to comment out all sections apart from one. Starting
+    by runing the first section, manually extracting the results
+    (e.g. using plots or directly using the best result), and then using
+    these results for running the following sections.
+    NOTE: The results from one section are not automatically used in the following
+    sections. However, there are sections in the code where these results can be
+    entered so that they will be used by all following sections.
 
     Returns:
         The function should return your optimised hyper-parameters.
@@ -662,6 +668,7 @@ def main():
         neurons=[100, 65, 30],
         activations=["relu", "relu", "relu"],
         optimizer_type="adadelta",
+        NaN_mean_of_columns=True,
     )
     regressor.fit(x_train, y_train)
 
